@@ -1,0 +1,11 @@
+VteTerminal { font:Monospace 11; }
+
+#terminal_active GtkEventBox { background-image: -gtk-gradient
+(linear, left top, left bottom, from (#f00), to (#640000)); }
+
+#terminal_active GtkLabel { color: #fff; }
+
+#terminal_inactive GtkEventBox { background-image: -gtk-gradient
+(linear, left top, left bottom, from (#dcdcdc), to (#969696)); }
+
+#terminal_inactive GtkLabel { color: #000; }

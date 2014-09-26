@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=0.1
+Name=SvanTerm
+Comment=Terminal emulator
+Exec=/opt/svanterm/svanterm
+Icon=/opt/svanterm/svanterm.png
+Terminal=false
+Categories=System;
