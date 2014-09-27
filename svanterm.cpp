@@ -33,9 +33,9 @@ Terminal *find_selected_terminal = NULL;
 TerminalDocker *docker = NULL;
 
 std::string getexepath() {
-    char result[ PATH_MAX ];
-    ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
-    auto exefile = std::string(result, (count > 0) ? count : 0 );
+    char result[PATH_MAX];
+    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+    auto exefile = std::string(result, (count > 0) ? count : 0);
     return exefile.substr(0, exefile.find_last_of("/"));
 }
 
