@@ -24,7 +24,6 @@
     - The active terminal cursor is visible while another program has the focus
     - Flickering on changing tab (might try black background or some buffering)
     - Move all style to CSS
-    - Bold on active tab?
 */
 
 FindWindow *find_window = NULL;
@@ -138,12 +137,19 @@ void Tabcontrol::page_removed(Widget* page, guint page_num) {
     if (get_n_pages() == 0)
         static_cast<Gtk::Window *>(get_parent())->close();
 };
+void Tabcontrol::switch_page(Widget* page, guint page_num) {
+    for (int i=0; i<get_n_pages(); i++)
+        static_cast<TabFrame *>(get_nth_page(i))->label_label.set_name("");
+
+    static_cast<TabFrame *>(get_nth_page(page_num))->label_label.set_name("active_tab");
+}
 Tabcontrol::Tabcontrol() {
     set_group_name("svanterm");
     signal_page_removed().connect(mem_fun(this, &Tabcontrol::page_removed));
     signal_drag_begin().connect(mem_fun(this, &Tabcontrol::tab_drag_begin));
     signal_drag_drop().connect(mem_fun(this, &Tabcontrol::tab_drag_drop), false);
     signal_page_added().connect(mem_fun(this, &Tabcontrol::page_added));
+    signal_switch_page().connect(mem_fun(this, &Tabcontrol::switch_page));
     set_can_focus(false);
     set_scrollable(true);
 

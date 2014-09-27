@@ -171,10 +171,10 @@ void Terminal::vte_set_active(gboolean active) {
     GdkRGBA terminal_color;
 
     if (active) {
-        gtk_widget_set_name(terminal, "terminal_active");
+        set_name("terminal_active");
         terminal_color = (GdkRGBA){.85, .85, .85, 1};
     } else {
-        gtk_widget_set_name(terminal, "terminal_inactive");
+        set_name("terminal_inactive");
         terminal_color = (GdkRGBA){.6, .6, .6, 1};
     }
 

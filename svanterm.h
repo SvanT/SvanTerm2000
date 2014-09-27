@@ -93,6 +93,7 @@ class Tabcontrol : public Gtk::Notebook {
         gboolean tab_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time);
         static GtkNotebook* detach_to_desktop(GtkNotebook *widget, GtkWidget *frame, gint x, gint y, gpointer user_data);
         void page_removed(Widget* page, guint page_num);
+        void switch_page(Widget* page, guint page_num);
 
     public:
         Tabcontrol();
