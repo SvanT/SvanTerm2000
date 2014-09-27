@@ -196,7 +196,11 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
         return FALSE;
 
     TerminalWindow *window;
-    Terminal *terminal = dynamic_cast<Terminal *>(get_focus()->get_parent()->get_parent());
+    auto focus_child = get_focus();
+    if (focus_child == NULL)
+        return FALSE;
+
+    Terminal *terminal = dynamic_cast<Terminal *>(focus_child->get_parent()->get_parent());
     if (terminal == NULL)
         return FALSE;
 
