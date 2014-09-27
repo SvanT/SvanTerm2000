@@ -289,7 +289,7 @@ TerminalWindow::TerminalWindow() {
     signal_key_press_event().connect(mem_fun(this, &TerminalWindow::KeyPress), false);
     signal_focus_in_event().connect(mem_fun(this, &TerminalWindow::got_focus));
     add(tabcontrol);
-    set_title("SvanTerm");
+    set_title("SvanTerm2000");
     try {
         set_icon_from_file(getexepath().append("/svanterm.png"));
     } catch (...) {
