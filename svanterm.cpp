@@ -81,7 +81,6 @@ Splitter::Splitter(Gtk::Container *parent, Gtk::Widget *pane1, Gtk::Widget *pane
 TabFrame::TabFrame(Terminal *terminal) {
     g_signal_connect(label_eventbox.gobj(), "realize", G_CALLBACK(add_to_docker_gdkwindow_map), this);
     g_signal_connect(label_eventbox.gobj(), "unrealize", G_CALLBACK(remove_from_docker_gdkwindow_map), NULL);
-    label_eventbox.set_visible_window(false);
     label_eventbox.signal_button_press_event().connect(mem_fun(this, &TabFrame::label_button_press));
 
     label_eventbox.add(label_label);
