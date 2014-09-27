@@ -19,7 +19,6 @@
     - Custom tab names
     - Broadcast to terminals
     - Resize splitter/terminal hotkey
-    - Find in scrollback (GtkSearchBar)
     - When dragging terminal to the tabcontrol from above, it doesn't dock until coming to the bottom.
     - The active terminal cursor is visible while another program has the focus
     - Flickering on changing tab (might try black background or some buffering)

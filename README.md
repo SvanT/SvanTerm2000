@@ -19,6 +19,7 @@ Keyboard shortcuts
 |Ctrl-Shift-S  |Enable notifications for terminal bell events in active terminal|
 |Ctrl-Shift-N  |New window|
 |Ctrl-Shift-F  |Find terminal (type what you want to search for, cycle through the results with up/down-arrows)|
+|Ctrl-Shift-I  |Find in scrollback|
 
 Tips and tricks
 ===============

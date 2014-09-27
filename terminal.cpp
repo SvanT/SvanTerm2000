@@ -126,6 +126,7 @@ Terminal::Terminal() {
 
     searchbar.add(searchentry);
     searchbar.connect_entry(searchentry);
+    searchentry.signal_focus_out_event().connect(mem_fun(this, &Terminal::searchentry_lost_focus));
     searchentry.signal_key_release_event().connect(mem_fun(this, &Terminal::searchentry_keypress));
 
     pack_start(eventbox, false, false, 0);
@@ -146,20 +147,28 @@ Terminal::~Terminal() {
     gtk_widget_destroy(vte);
 }
 bool Terminal::searchentry_keypress(GdkEventKey* event) {
-    if (event->keyval == GDK_KEY_Return || event->keyval == GDK_KEY_KP_Enter) {
-        vte_terminal_unselect_all((VteTerminal *)vte);
-        GRegex *regex = g_regex_new(searchentry.get_text().c_str(), (GRegexCompileFlags)0, (GRegexMatchFlags)0, 0);
-        //vte_terminal_search_set_wrap_around((VteTerminal *)vte, true);
-        vte_terminal_search_set_gregex((VteTerminal *)vte, regex, (GRegexMatchFlags)0);
+    if (event->keyval == GDK_KEY_Shift_L || event->keyval == GDK_KEY_Shift_R)
+        return false;
 
-        vte_terminal_search_find_next((VteTerminal *)vte);
+    if (event->keyval == GDK_KEY_Return || event->keyval == GDK_KEY_KP_Enter) {
+        if (event->state & GDK_SHIFT_MASK) {
+            if (!vte_terminal_search_find_next((VteTerminal *)vte)) {
+                vte_terminal_unselect_all((VteTerminal *)vte);
+                vte_terminal_search_find_next((VteTerminal *)vte);
+            }
+        } else {
+            if (!vte_terminal_search_find_previous((VteTerminal *)vte)) {
+                vte_terminal_unselect_all((VteTerminal *)vte);
+                vte_terminal_search_find_previous((VteTerminal *)vte);
+            }
+        }
         return false;
     }
+
+    GRegex *regex = g_regex_new(searchentry.get_text().c_str(), G_REGEX_CASELESS, (GRegexMatchFlags)0, 0);
     vte_terminal_unselect_all((VteTerminal *)vte);
-    GRegex *regex = g_regex_new(searchentry.get_text().c_str(), (GRegexCompileFlags)0, (GRegexMatchFlags)0, 0);
-    //vte_terminal_search_set_wrap_around((VteTerminal *)vte, true);
     vte_terminal_search_set_gregex((VteTerminal *)vte, regex, (GRegexMatchFlags)0);
-    vte_terminal_search_find_next((VteTerminal *)vte);
+    vte_terminal_search_find_previous((VteTerminal *)vte);
     return false;
 }
 
@@ -184,4 +193,8 @@ void Terminal::vte_set_active(gboolean active) {
 void Terminal::focus_vte() {
     gtk_window_set_focus(GTK_WINDOW(get_toplevel()->gobj()), vte);
     vte_set_active(true);
+}
+bool Terminal::searchentry_lost_focus(GdkEventFocus *event) {
+    if (!get_tab_frame(this)->get_focus_child())
+        focus_vte();
 }

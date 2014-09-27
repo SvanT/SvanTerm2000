@@ -28,6 +28,8 @@ class Terminal : public Gtk::Box {
         static void vte_selection_changed(VteTerminal *terminal, gpointer user_data);
         static void vte_title_changed(VteTerminal *widget, gpointer user_data);
 
+        bool searchentry_lost_focus(GdkEventFocus *event);
+
     public:
         int child_pid;
         bool notifications_enabled = false;
