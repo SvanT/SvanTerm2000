@@ -30,31 +30,6 @@ Tabcontrol *current_dragged_tab = NULL;
 Terminal *find_selected_terminal = NULL;
 TerminalDocker *docker = NULL;
 
-std::string getexepath() {
-    char result[PATH_MAX];
-    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-    auto exefile = std::string(result, (count > 0) ? count : 0);
-    return exefile.substr(0, exefile.find_last_of("/"));
-}
-
-TabFrame *get_tab_frame(Gtk::Widget *widget) {
-    while (!dynamic_cast<TabFrame *>(widget))
-        widget = widget->get_parent();
-
-    return static_cast<TabFrame *>(widget);
-}
-std::vector<Terminal *> build_terminal_list(Gtk::Widget *widget, std::vector<Terminal *> *list = new std::vector<Terminal *>) {
-    if (Gtk::Bin *bin = dynamic_cast<Gtk::Bin *>(widget)) {
-        build_terminal_list(bin->get_child(), list);
-    } else if (Splitter *splitter = dynamic_cast<Splitter *>(widget)) {
-        build_terminal_list(splitter->get_child1(), list);
-        build_terminal_list(splitter->get_child2(), list);
-    } else if (Terminal *terminal = dynamic_cast<Terminal *>(widget))
-        list->push_back(terminal);
-
-    return *list;
-}
-
 Splitter::Splitter(Gtk::Container *parent, Gtk::Widget *pane1, Gtk::Widget *pane2, Gtk::Orientation orientation) {
     set_orientation(orientation);
     Gtk::Requisition min_size, size;
@@ -170,9 +145,8 @@ void Tabcontrol::page_added(Widget* page, guint page_num) {
 
 void TerminalWindow::update_title() {
     auto focus = get_focus();
-    if (focus == NULL) {
+    if (focus == NULL)
         return;
-    }
     Terminal *terminal = dynamic_cast<Terminal *>(focus->get_parent()->get_parent());
     if (terminal == NULL)
         return;
@@ -183,7 +157,6 @@ void TerminalWindow::update_title() {
         set_title(title);
     }
 }
-
 bool TerminalWindow::KeyPress(GdkEventKey* event) {
     /* Shift-Insert is implemented in VTE, however it seems to fail under certain circumstances.
         We implement it here instead */
@@ -351,20 +324,6 @@ bool TerminalWindow::got_focus(GdkEventFocus* event) {
     return false;
 }
 
-void load_css() {
-    auto context = Gtk::StyleContext::create();
-    auto css = Gtk::CssProvider::create();
-    auto screen = Gdk::Screen::get_default();
-
-    try {
-        css->load_from_path(getexepath().append("/svanterm.css"));
-    } catch (...) {
-        printf("Failed to load CSS");
-        fflush(stdout);
-    }
-    context->add_provider_for_screen(screen, css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-}
-
 Frame::Frame() {
     set_can_focus(FALSE);
     set_shadow_type(Gtk::SHADOW_NONE);
@@ -387,8 +346,43 @@ void Frame::destroy() {
     delete this;
 }
 
-int main(int argc, char *argv[]) 
-{
+std::string getexepath() {
+    char result[PATH_MAX];
+    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+    auto exefile = std::string(result, (count > 0) ? count : 0);
+    return exefile.substr(0, exefile.find_last_of("/"));
+}
+TabFrame *get_tab_frame(Gtk::Widget *widget) {
+    while (!dynamic_cast<TabFrame *>(widget))
+        widget = widget->get_parent();
+
+    return static_cast<TabFrame *>(widget);
+}
+std::vector<Terminal *> build_terminal_list(Gtk::Widget *widget, std::vector<Terminal *> *list) {
+    if (Gtk::Bin *bin = dynamic_cast<Gtk::Bin *>(widget)) {
+        build_terminal_list(bin->get_child(), list);
+    } else if (Splitter *splitter = dynamic_cast<Splitter *>(widget)) {
+        build_terminal_list(splitter->get_child1(), list);
+        build_terminal_list(splitter->get_child2(), list);
+    } else if (Terminal *terminal = dynamic_cast<Terminal *>(widget))
+        list->push_back(terminal);
+
+    return *list;
+}
+void load_css() {
+    auto context = Gtk::StyleContext::create();
+    auto css = Gtk::CssProvider::create();
+    auto screen = Gdk::Screen::get_default();
+
+    try {
+        css->load_from_path(getexepath().append("/svanterm.css"));
+    } catch (...) {
+        printf("Failed to load CSS");
+        fflush(stdout);
+    }
+    context->add_provider_for_screen(screen, css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+int main(int argc, char *argv[]) {
     Gtk::Main app(argc, argv);
     notify_init("SvanTerm");
     docker = new TerminalDocker;

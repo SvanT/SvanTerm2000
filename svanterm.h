@@ -1,6 +1,7 @@
 #include <gtkmm.h>
 #include <libnotify/notify.h>
 #include <vte-2.91/vte/vte.h>
+
 class Terminal;
 
 class FindLabel : public Gtk::Label {
@@ -137,3 +138,7 @@ class TerminalWindow : public Gtk::Window {
 void add_to_docker_gdkwindow_map(GtkWidget *widget, gpointer user_data);
 void remove_from_docker_gdkwindow_map(GtkWidget *widget, gpointer user_data);
 TabFrame *get_tab_frame(Gtk::Widget *widget);
+std::vector<Terminal *> build_terminal_list(Gtk::Widget *widget, std::vector<Terminal *> *list = new std::vector<Terminal *>);
+std::string getexepath();
+void load_css();
+int main(int argc, char *argv[]);

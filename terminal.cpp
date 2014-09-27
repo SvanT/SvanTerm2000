@@ -9,7 +9,6 @@ Terminal *last_active_terminal = NULL;
 void Terminal::kill_vte() {
     kill(child_pid, 9);
 }
-
 bool Terminal::header_button_press(GdkEventButton* event) {
     focus_vte();
     if (event->button == 1)
@@ -19,7 +18,6 @@ bool Terminal::header_button_press(GdkEventButton* event) {
 
     return TRUE;
 }
-
 gboolean Terminal::vte_child_exited(GtkWidget *widget, GdkEventExpose *event, gpointer user_data) {
     Terminal *_this = static_cast<Terminal *>(user_data);
     static_cast<Frame *>(_this->get_parent())->destroy();
@@ -171,7 +169,6 @@ bool Terminal::searchentry_keypress(GdkEventKey* event) {
     vte_terminal_search_find_previous((VteTerminal *)vte);
     return false;
 }
-
 void Terminal::vte_set_active(gboolean active) {
     if (active && last_active_terminal)
         last_active_terminal->vte_set_active(false);
