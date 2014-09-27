@@ -23,7 +23,6 @@
     - When dragging terminal to the tabcontrol from above, it doesn't dock until coming to the bottom.
     - The active terminal cursor is visible while another program has the focus
     - Flickering on changing tab (might try black background or some buffering)
-    - Thick borders in KDE
     - Move all style to CSS
     - Bold on active tab?
 */
