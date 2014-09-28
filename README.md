@@ -20,6 +20,7 @@ Keyboard shortcuts
 |Ctrl-Shift-N  |New window|
 |Ctrl-Shift-F  |Find terminal (type what you want to search for, cycle through the results with up/down-arrows)|
 |Ctrl-Shift-I  |Find in scrollback|
+|Ctrl-Shift-M  |Rename current tab|
 
 Tips and tricks
 ===============

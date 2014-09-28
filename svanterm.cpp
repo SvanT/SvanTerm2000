@@ -16,7 +16,6 @@
         - sudo ln -s /usr/local/lib/libvte-2.91.so.0 /usr/lib/
 
     TODOS:
-    - Custom tab names
     - Broadcast to terminals
     - Resize splitter/terminal hotkey
     - When dragging terminal to the tabcontrol from above, it doesn't dock until coming to the bottom.
@@ -51,17 +50,41 @@ Splitter::Splitter(Gtk::Container *parent, Gtk::Widget *pane1, Gtk::Widget *pane
     show_all();
 };
 
+bool TabFrame::labelentry_lost_focus(GdkEventFocus *event) {
+    auto tab_control = static_cast<Tabcontrol *>(get_parent());
+    tab_control->set_tab_label(*this, label_eventbox);
+
+    if (!get_focus_child())
+        build_terminal_list(this)[0]->focus_vte();
+
+    update_title();
+}
+bool TabFrame::labelentry_keypress(GdkEventKey* event) {
+    if (event->keyval == GDK_KEY_Escape || event->keyval == GDK_KEY_Return ||
+        event->keyval == GDK_KEY_KP_Enter)
+            label_entry.hide();
+}
 TabFrame::TabFrame(Terminal *terminal) {
     g_signal_connect(label_eventbox.gobj(), "realize", G_CALLBACK(add_to_docker_gdkwindow_map), this);
     g_signal_connect(label_eventbox.gobj(), "unrealize", G_CALLBACK(remove_from_docker_gdkwindow_map), NULL);
+
+    label_entry.signal_focus_out_event().connect(mem_fun(this, &TabFrame::labelentry_lost_focus));
+    label_entry.signal_key_press_event().connect(mem_fun(this, &TabFrame::labelentry_keypress), false);
     label_eventbox.signal_button_press_event().connect(mem_fun(this, &TabFrame::label_button_press));
 
     label_eventbox.add(label_label);
     label_eventbox.show_all();
     terminal->reparent(*this);
     add(*terminal);
+    label_entry.show();
 }
 void TabFrame::update_title() {
+    auto label_text = label_entry.get_text();
+    if (label_text != "") {
+        label_label.set_label(label_text);
+        return;
+    }
+
     Gtk::Widget *focus_child = this;
 
     while (dynamic_cast<Gtk::Container *>(focus_child))
@@ -73,6 +96,11 @@ void TabFrame::update_title() {
             label_label.set_label(std::string(title).substr(0, 20).c_str());
         }
     }
+}
+void TabFrame::edit_title() {
+    auto tab_control = static_cast<Tabcontrol *>(get_parent());
+    tab_control->set_tab_label(*this, label_entry);
+    static_cast<TerminalWindow *>(get_toplevel())->set_focus(label_entry);
 }
 TabFrame::~TabFrame() {
     is_killing_terminals = true;
@@ -180,59 +208,63 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
     switch (event->keyval) {
         case GDK_KEY_W:
             delete get_tab_frame(get_focus());
-            return TRUE;
+            return true;
 
         case GDK_KEY_O:
             tabcontrol.prev_page();
-            return TRUE;
+            return true;
 
         case GDK_KEY_P:
             tabcontrol.next_page();
-            return TRUE;
+            return true;
 
         case GDK_KEY_F:
             find_window->show_find(this);
-            return TRUE;
+            return true;
 
         case GDK_KEY_I:
             terminal->searchbar.set_search_mode();
-            return TRUE;
+            return true;
 
         case GDK_KEY_T:
             tabcontrol.add_tab();
             show_all_children();
-            return TRUE;
+            return true;
 
         case GDK_KEY_K:
             cycle_terminals(-1);
-            return TRUE;
+            return true;
 
         case GDK_KEY_L:
             cycle_terminals(1);
-            return TRUE;
+            return true;
 
         case GDK_KEY_H:
             cycle_windows(-1);
-            return TRUE;
+            return true;
 
         case GDK_KEY_J:
             cycle_windows(1);
-            return TRUE;
+            return true;
 
         case GDK_KEY_N:
             window = new TerminalWindow;
             window->tabcontrol.add_tab();
             window->show_all();
-            return TRUE;
+            return true;
+
+        case GDK_KEY_M:
+            get_tab_frame(terminal)->edit_title();
+            return true;
 
         case GDK_KEY_D:
             terminal->kill_vte();
-            return TRUE;
+            return true;
 
         case GDK_KEY_S:
             terminal->notifications_enabled = !terminal->notifications_enabled;
             terminal->update_title();
-            return TRUE;
+            return true;
 
         case GDK_KEY_E:
         case GDK_KEY_R:

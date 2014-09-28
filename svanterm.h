@@ -53,12 +53,18 @@ class Frame : public Gtk::Frame {
 
 
 class TabFrame : public Frame {
+    private:
+        bool labelentry_keypress(GdkEventKey* event);
+        bool labelentry_lost_focus(GdkEventFocus *event);
+
     public:
         bool is_killing_terminals = false;
 
         Gtk::EventBox label_eventbox;
         Gtk::Label label_label;
+        Gtk::Entry label_entry;
 
+        void edit_title();
         bool label_button_press(GdkEventButton* event);
         TabFrame(Terminal *terminal = manage(new Terminal));
         ~TabFrame();
