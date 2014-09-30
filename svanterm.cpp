@@ -303,7 +303,7 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
         }
     }
 
-    if (event->state & GDK_CONTROL_MASK) {
+    if ((event->state & GDK_CONTROL_MASK) && !(event->state & GDK_SHIFT_MASK)) {
         switch (event->keyval) {
             case GDK_KEY_Up:
             case GDK_KEY_Down:
@@ -314,7 +314,7 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
         }
     }
 
-    if (event->state & GDK_SHIFT_MASK) {
+    if (!(event->state & GDK_CONTROL_MASK) && (event->state & GDK_SHIFT_MASK)) {
         switch (event->keyval) {
             case GDK_KEY_Left:
                 tabcontrol.prev_page();
