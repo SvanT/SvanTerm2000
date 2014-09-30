@@ -186,6 +186,10 @@ void TerminalWindow::update_title() {
     }
 }
 bool TerminalWindow::KeyPress(GdkEventKey* event) {
+    // for (auto terminal : build_terminal_list(tabcontrol.get_nth_page(tabcontrol.get_current_page()))) {
+    //     g_signal_emit_by_name(terminal->vte, "key-press-event", event, NULL);
+    // }
+
     /* Shift-Insert is implemented in VTE, however it seems to fail under certain circumstances.
         We implement it here instead */
     if (event->state & GDK_SHIFT_MASK && event->keyval == GDK_KEY_Insert) {
