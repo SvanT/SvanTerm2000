@@ -22,6 +22,7 @@
     - The active terminal cursor is visible while another program has the focus
     - Flickering on changing tab (might try black background or some buffering)
     - Move all style to CSS
+    - Shift-Left/Right to change tab
 */
 
 FindWindow *find_window = NULL;
@@ -214,11 +215,11 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
             delete get_tab_frame(get_focus());
             return true;
 
-        case GDK_KEY_O:
+        case GDK_KEY_Left:
             tabcontrol.prev_page();
             return true;
 
-        case GDK_KEY_P:
+        case GDK_KEY_Right:
             tabcontrol.next_page();
             return true;
 
