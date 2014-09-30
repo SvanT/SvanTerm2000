@@ -210,11 +210,11 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
             delete get_tab_frame(get_focus());
             return true;
 
-        case GDK_KEY_O:
+        case GDK_KEY_Left:
             tabcontrol.prev_page();
             return true;
 
-        case GDK_KEY_P:
+        case GDK_KEY_Right:
             tabcontrol.next_page();
             return true;
 
