@@ -22,7 +22,6 @@
     - The active terminal cursor is visible while another program has the focus
     - Flickering on changing tab (might try black background or some buffering)
     - Move all style to CSS
-    - Shift-Left/Right to change tab
 */
 
 FindWindow *find_window = NULL;
@@ -186,107 +185,149 @@ void TerminalWindow::update_title() {
         set_title(title);
     }
 }
+void TerminalWindow::walk_terminal(int direction) {
+    auto widget = get_focus();
+    while (!dynamic_cast<TabFrame *>(widget)) {
+        if (auto splitter = dynamic_cast<Splitter *>(widget->get_parent())) {
+            if ((splitter->get_orientation() == Gtk::ORIENTATION_VERTICAL &&
+                 (direction == GDK_KEY_Down || direction == GDK_KEY_Up)) ||
+                (splitter->get_orientation() == Gtk::ORIENTATION_HORIZONTAL &&
+                 (direction == GDK_KEY_Left || direction == GDK_KEY_Right))) {
+                if (splitter->get_child1() == widget &&
+                    (direction == GDK_KEY_Down || direction == GDK_KEY_Right)) {
+                    auto terminal_list = build_terminal_list(splitter->get_child2());
+                    if (terminal_list.size()) {
+                        terminal_list[0]->focus_vte();
+                        return;
+                    }
+                } else if (splitter->get_child2() == widget &&
+                    (direction == GDK_KEY_Up || direction == GDK_KEY_Left)) {
+                    auto terminal_list = build_terminal_list(splitter->get_child1());
+                    if (terminal_list.size()) {
+                        terminal_list[0]->focus_vte();
+                        return;
+                    }
+                }
+            }
+        }
+        widget = widget->get_parent();
+    }
+}
 bool TerminalWindow::KeyPress(GdkEventKey* event) {
     // for (auto terminal : build_terminal_list(tabcontrol.get_nth_page(tabcontrol.get_current_page()))) {
     //     g_signal_emit_by_name(terminal->vte, "key-press-event", event, NULL);
     // }
 
-    /* Shift-Insert is implemented in VTE, however it seems to fail under certain circumstances.
-        We implement it here instead */
-    if (event->state & GDK_SHIFT_MASK && event->keyval == GDK_KEY_Insert) {
-            vte_terminal_paste_clipboard(VTE_TERMINAL(get_focus()->gobj()));
-            return true;
-    }
-
-    if (!(event->state & GDK_CONTROL_MASK) || !(event->state & GDK_SHIFT_MASK))
-        return FALSE;
-
     TerminalWindow *window;
     auto focus_child = get_focus();
     if (focus_child == NULL)
-        return FALSE;
-
+        return false;
     Terminal *terminal = dynamic_cast<Terminal *>(focus_child->get_parent()->get_parent());
     if (terminal == NULL)
-        return FALSE;
+        return false;
 
-    switch (event->keyval) {
-        case GDK_KEY_W:
-            delete get_tab_frame(get_focus());
+    /* Shift-Insert is implemented in VTE, however it seems to fail under certain circumstances.
+        We implement it here instead */
+    if (event->state & GDK_SHIFT_MASK && event->keyval == GDK_KEY_Insert) {
+            vte_terminal_paste_clipboard(VTE_TERMINAL(focus_child->gobj()));
             return true;
-
-        case GDK_KEY_Left:
-            tabcontrol.prev_page();
-            return true;
-
-        case GDK_KEY_Right:
-            tabcontrol.next_page();
-            return true;
-
-        case GDK_KEY_F:
-            find_window->show_find(this);
-            return true;
-
-        case GDK_KEY_I:
-            terminal->searchbar.set_search_mode();
-            return true;
-
-        case GDK_KEY_T:
-            tabcontrol.add_tab();
-            show_all_children();
-            return true;
-
-        case GDK_KEY_K:
-            cycle_terminals(-1);
-            return true;
-
-        case GDK_KEY_L:
-            cycle_terminals(1);
-            return true;
-
-        case GDK_KEY_H:
-            cycle_windows(-1);
-            return true;
-
-        case GDK_KEY_J:
-            cycle_windows(1);
-            return true;
-
-        case GDK_KEY_N:
-            window = new TerminalWindow;
-            window->tabcontrol.add_tab();
-            window->show_all();
-            return true;
-
-        case GDK_KEY_M:
-            get_tab_frame(terminal)->edit_title();
-            return true;
-
-        case GDK_KEY_D:
-            terminal->kill_vte();
-            return true;
-
-        case GDK_KEY_S:
-            terminal->notifications_enabled = !terminal->notifications_enabled;
-            terminal->update_title();
-            return true;
-
-        case GDK_KEY_E:
-        case GDK_KEY_R:
-            Gtk::Container *parent = terminal->get_parent();
-            Terminal *new_terminal = manage(new Terminal);
-
-            if (event->keyval == GDK_KEY_E)
-                manage(new Splitter(parent, terminal, new_terminal, Gtk::ORIENTATION_HORIZONTAL));
-            else
-                manage(new Splitter(parent, terminal, new_terminal, Gtk::ORIENTATION_VERTICAL));
-
-            show_all_children();
-            new_terminal->focus_vte();
-            return TRUE;
     }
-    return FALSE;
-};
+
+    if ((event->state & GDK_CONTROL_MASK) && (event->state & GDK_SHIFT_MASK)) {
+        switch (event->keyval) {
+            case GDK_KEY_W:
+                delete get_tab_frame(get_focus());
+                return true;
+
+            case GDK_KEY_F:
+                find_window->show_find(this);
+                return true;
+
+            case GDK_KEY_I:
+                terminal->searchbar.set_search_mode();
+                return true;
+
+            case GDK_KEY_T:
+                tabcontrol.add_tab();
+                show_all_children();
+                return true;
+
+            case GDK_KEY_J:
+                cycle_terminals(-1);
+                return true;
+
+            case GDK_KEY_K:
+                cycle_terminals(1);
+                return true;
+
+            case GDK_KEY_Left:
+                cycle_windows(-1);
+                return true;
+
+            case GDK_KEY_Right:
+                cycle_windows(1);
+                return true;
+
+            case GDK_KEY_N:
+                window = new TerminalWindow;
+                window->tabcontrol.add_tab();
+                window->show_all();
+                return true;
+
+            case GDK_KEY_M:
+                get_tab_frame(terminal)->edit_title();
+                return true;
+
+            case GDK_KEY_D:
+                terminal->kill_vte();
+                return true;
+
+            case GDK_KEY_S:
+                terminal->notifications_enabled = !terminal->notifications_enabled;
+                terminal->update_title();
+                return true;
+
+            case GDK_KEY_E:
+            case GDK_KEY_R:
+                Gtk::Container *parent = terminal->get_parent();
+                Terminal *new_terminal = manage(new Terminal);
+
+                if (event->keyval == GDK_KEY_E)
+                    manage(new Splitter(parent, terminal, new_terminal, Gtk::ORIENTATION_HORIZONTAL));
+                else
+                    manage(new Splitter(parent, terminal, new_terminal, Gtk::ORIENTATION_VERTICAL));
+
+                show_all_children();
+                new_terminal->focus_vte();
+                return true;
+        }
+    }
+
+    if (event->state & GDK_CONTROL_MASK) {
+        switch (event->keyval) {
+            case GDK_KEY_Up:
+            case GDK_KEY_Down:
+            case GDK_KEY_Left:
+            case GDK_KEY_Right:
+                walk_terminal(event->keyval);
+                return true;
+        }
+    }
+
+    if (event->state & GDK_SHIFT_MASK) {
+        switch (event->keyval) {
+            case GDK_KEY_Left:
+                tabcontrol.prev_page();
+                return true;
+
+            case GDK_KEY_Right:
+                tabcontrol.next_page();
+                return true;
+        }
+    }
+
+    return false;
+}
 void TerminalWindow::cycle_terminals(int offset) {
     Gtk::Widget *focused = get_focus();
     if (!focused)

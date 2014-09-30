@@ -9,13 +9,17 @@ Keyboard shortcuts
 |Ctrl-Shift-W      |Close tab|
 |Ctrl-Shift-E      |Horizontal split|
 |Ctrl-Shift-R      |Vertical split|
-|Ctrl-Shift-D      |Kill active terminal|
-|Ctrl-Shift-K      |Select previous terminal in tab|
-|Ctrl-Shift-L      |Select next terminal in tab|
-|Ctrl-Shift-Left   |Select previous tab|
-|Ctrl-Shift-Right  |Select next tab|
-|Ctrl-Shift-H      |Select previous window|
-|Ctrl-Shift-J      |Select next window|
+|Ctrl-Shift-D      |Kill active terminal (send kill -9 to child pid)|
+|Ctrl-Shift-J      |Select previous terminal in tab|
+|Ctrl-Shift-K      |Select next terminal in tab|
+|Ctrl-Up           |Select terminal above|
+|Ctrl-Down         |Select terminal under|
+|Ctrl-Left         |Select terminal to the left|
+|Ctrl-Right        |Select terminal to the right|
+|Shift-Left        |Select previous tab|
+|Shift-Right       |Select next tab|
+|Ctrl-Shift-Left   |Select previous window|
+|Ctrl-Shift-Right  |Select next window|
 |Ctrl-Shift-S      |Enable notifications for terminal bell events in active terminal|
 |Ctrl-Shift-N      |New window|
 |Ctrl-Shift-F      |Find terminal (type what you want to search for, cycle through the results with up/down-arrows)|
