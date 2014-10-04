@@ -12,20 +12,24 @@ Keyboard shortcuts
 |Ctrl-Shift-D      |Kill active terminal (send kill -9 to child pid)|
 |Ctrl-Shift-J      |Select previous terminal in tab|
 |Ctrl-Shift-K      |Select next terminal in tab|
-|Ctrl-Up           |Select terminal above|
-|Ctrl-Down         |Select terminal under|
-|Ctrl-Left         |Select terminal to the left|
-|Ctrl-Right        |Select terminal to the right|
-|Shift-Left        |Select previous tab|
-|Shift-Right       |Select next tab|
-|Ctrl-Shift-Left   |Select previous window|
-|Ctrl-Shift-Right  |Select next window|
+|Ctrl-Shift-Up     |Resize terminal up|
+|Ctrl-Shift-Down   |Resize terminal down|
+|Ctrl-Shift-Left   |Resize terminal left|
+|Ctrl-Shift-Right  |Resize terminal right|
 |Ctrl-Shift-S      |Enable notifications for terminal bell events in active terminal|
 |Ctrl-Shift-N      |New window|
 |Ctrl-Shift-F      |Find terminal (type what you want to search for, cycle through the results with up/down-arrows)|
 |Ctrl-Shift-I      |Find in scrollback|
 |Ctrl-Shift-M      |Rename current tab|
 |Ctrl-Shift-B      |Toggle broadcast to all terminals in tab|
+|Ctrl-Up           |Select terminal above|
+|Ctrl-Down         |Select terminal under|
+|Ctrl-Left         |Select terminal to the left|
+|Ctrl-Right        |Select terminal to the right|
+|Shift-Left        |Select previous tab|
+|Shift-Right       |Select next tab|
+|Shift-Up          |Select previous window|
+|Shift-Down        |Select next window|
 
 Tips and tricks
 ===============

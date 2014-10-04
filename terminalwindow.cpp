@@ -17,6 +17,27 @@ void TerminalWindow::update_title() {
         set_title(title);
     }
 }
+void TerminalWindow::resize_terminal(int direction) {
+    auto widget = get_focus();
+
+    while (!dynamic_cast<TabFrame *>(widget)) {
+        if (auto splitter = dynamic_cast<Splitter *>(widget->get_parent())) {
+            if ((splitter->get_orientation() == Gtk::ORIENTATION_VERTICAL &&
+                 (direction == GDK_KEY_Down || direction == GDK_KEY_Up)) ||
+                (splitter->get_orientation() == Gtk::ORIENTATION_HORIZONTAL &&
+                 (direction == GDK_KEY_Left || direction == GDK_KEY_Right))) {
+                    auto position = splitter->get_position();
+                    if (direction == GDK_KEY_Up || direction == GDK_KEY_Left)
+                        position -= 50;
+                    else
+                        position += 50;
+                    splitter->set_position(position);
+                    return;
+            }
+        }
+        widget = widget->get_parent();
+    }
+}
 void TerminalWindow::walk_terminal(int direction) {
     auto focus_widget = get_focus();
     auto widget = focus_widget;
@@ -102,14 +123,6 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
                 cycle_terminals(1);
                 return true;
 
-            case GDK_KEY_Left:
-                cycle_windows(-1);
-                return true;
-
-            case GDK_KEY_Right:
-                cycle_windows(1);
-                return true;
-
             case GDK_KEY_N:
                 window = new TerminalWindow;
                 window->tabcontrol.add_tab();
@@ -132,6 +145,13 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
             case GDK_KEY_B:
                 broadcast_active = !broadcast_active;
                 update_active_terminals();
+                return true;
+
+            case GDK_KEY_Up:
+            case GDK_KEY_Down:
+            case GDK_KEY_Left:
+            case GDK_KEY_Right:
+                resize_terminal(event->keyval);
                 return true;
 
             case GDK_KEY_E:
@@ -163,6 +183,14 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
 
     if (!(event->state & GDK_CONTROL_MASK) && (event->state & GDK_SHIFT_MASK)) {
         switch (event->keyval) {
+            case GDK_KEY_Up:
+                cycle_windows(-1);
+                return true;
+
+            case GDK_KEY_Down:
+                cycle_windows(1);
+                return true;
+
             case GDK_KEY_Left:
                 tabcontrol.prev_page();
                 return true;
