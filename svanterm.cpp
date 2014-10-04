@@ -345,7 +345,8 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
 
     if (broadcast_active) {
         for (auto terminal : build_terminal_list(tabcontrol.get_nth_page(tabcontrol.get_current_page()))) {
-            g_signal_emit_by_name(terminal->vte, "key-press-event", event, NULL);
+            gboolean ret;
+            g_signal_emit_by_name(terminal->vte, "key-press-event", event, &ret);
         }
         return true;
     }
