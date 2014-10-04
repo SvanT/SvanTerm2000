@@ -142,7 +142,10 @@ void Tabcontrol::switch_page(Widget* page, guint page_num) {
     for (int i=0; i<get_n_pages(); i++)
         static_cast<TabFrame *>(get_nth_page(i))->label_label.set_name("");
 
-    static_cast<TabFrame *>(get_nth_page(page_num))->label_label.set_name("active_tab");
+    auto tabframe = static_cast<TabFrame *>(get_nth_page(page_num));
+    tabframe->label_label.set_name("active_tab");
+    if (tabframe->get_focus_child() == NULL)
+        build_terminal_list(tabframe)[0]->focus_vte();
 }
 Tabcontrol::Tabcontrol() {
     set_group_name("svanterm");
