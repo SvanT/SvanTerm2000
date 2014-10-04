@@ -22,6 +22,7 @@
     - The active terminal cursor is visible while another program has the focus
     - Flickering on changing tab (might try black background or some buffering)
     - Move all style to CSS
+    - Remember state of other splitters when going left and right again
 */
 
 FindWindow *find_window = NULL;
