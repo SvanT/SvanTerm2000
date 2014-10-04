@@ -186,7 +186,10 @@ void TerminalWindow::update_title() {
     }
 }
 void TerminalWindow::walk_terminal(int direction) {
-    auto widget = get_focus();
+    auto focus_widget = get_focus();
+    auto widget = focus_widget;
+    std::vector<Terminal *> possible_terminals;
+
     while (!dynamic_cast<TabFrame *>(widget)) {
         if (auto splitter = dynamic_cast<Splitter *>(widget->get_parent())) {
             if ((splitter->get_orientation() == Gtk::ORIENTATION_VERTICAL &&
@@ -195,22 +198,33 @@ void TerminalWindow::walk_terminal(int direction) {
                  (direction == GDK_KEY_Left || direction == GDK_KEY_Right))) {
                 if (splitter->get_child1() == widget &&
                     (direction == GDK_KEY_Down || direction == GDK_KEY_Right)) {
-                    auto terminal_list = build_terminal_list(splitter->get_child2());
-                    if (terminal_list.size()) {
-                        terminal_list[0]->focus_vte();
-                        return;
-                    }
+                        possible_terminals = build_terminal_list(splitter->get_child2());
+                        if (possible_terminals.size())
+                            break;
                 } else if (splitter->get_child2() == widget &&
                     (direction == GDK_KEY_Up || direction == GDK_KEY_Left)) {
-                    auto terminal_list = build_terminal_list(splitter->get_child1());
-                    if (terminal_list.size()) {
-                        terminal_list[0]->focus_vte();
-                        return;
-                    }
+                        possible_terminals = build_terminal_list(splitter->get_child1());
+                        if (possible_terminals.size())
+                            break;
                 }
             }
         }
         widget = widget->get_parent();
+    }
+
+    if (possible_terminals.size()) {
+        Terminal *nearest_terminal = possible_terminals[0];
+        int nearest_x, nearest_y, this_x, this_y;
+        focus_widget->translate_coordinates(*nearest_terminal, 0, 0, nearest_x, nearest_y);
+        for (auto terminal : possible_terminals) {
+            focus_widget->translate_coordinates(*terminal, 0, 0, this_x, this_y);
+            if (abs(this_x) + abs(this_y) < abs(nearest_x) + abs(nearest_y)) {
+                nearest_terminal = terminal;
+                nearest_x = this_x;
+                nearest_y = this_y;
+            }
+        }
+        nearest_terminal->focus_vte();
     }
 }
 bool TerminalWindow::KeyPress(GdkEventKey* event) {
