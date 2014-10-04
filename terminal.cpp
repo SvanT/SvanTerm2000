@@ -37,7 +37,15 @@ gboolean Terminal::vte_click(GtkWidget *vte, GdkEvent *event, gpointer user_data
         _exit(0);
     }
 }
-gboolean Terminal::vte_focus_event(GtkWidget *vte, GdkEvent *event, gpointer user_data) {
+gboolean Terminal::vte_got_focus(GtkWidget *vte, GdkEvent *event, gpointer user_data) {
+    // To make sure this terminal is selected next time this tab is selected
+    Terminal *_this = static_cast<Terminal *>(user_data);
+    get_tab_frame(_this)->set_focus_chain(std::vector<Gtk::Widget *>(1, _this));
+
+    update_active_terminals();
+    return FALSE;
+}
+gboolean Terminal::vte_lost_focus(GtkWidget *vte, GdkEvent *event, gpointer user_data) {
     update_active_terminals();
     return FALSE;
 }
@@ -94,8 +102,8 @@ Terminal::Terminal() {
     g_signal_connect(vte, "beep", G_CALLBACK(Terminal::vte_beep), this);
     g_signal_connect(vte, "child-exited", G_CALLBACK(Terminal::vte_child_exited), this);
     g_signal_connect(vte, "button-press-event", G_CALLBACK(Terminal::vte_click), this);
-    g_signal_connect(vte, "focus-in-event", G_CALLBACK(Terminal::vte_focus_event), this);
-    g_signal_connect(vte, "focus-out-event", G_CALLBACK(Terminal::vte_focus_event), this);
+    g_signal_connect(vte, "focus-in-event", G_CALLBACK(Terminal::vte_got_focus), this);
+    g_signal_connect(vte, "focus-out-event", G_CALLBACK(Terminal::vte_lost_focus), this);
     g_signal_connect(vte, "selection-changed", G_CALLBACK(Terminal::vte_selection_changed), this);
     g_signal_connect(vte, "window-title-changed", G_CALLBACK(Terminal::vte_title_changed), this);
 
@@ -165,9 +173,6 @@ void Terminal::vte_set_active(gboolean active) {
     vte_terminal_set_color_foreground((VteTerminal *)vte, &terminal_color);
 }
 void Terminal::focus_vte() {
-    // To make sure this terminal is selected next time this tab is selected
-    //get_tab_frame(this)->set_focus_chain(std::vector<Gtk::Widget *>(1, this));
-
     gtk_window_set_focus(GTK_WINDOW(get_toplevel()->gobj()), vte);
 }
 bool Terminal::searchentry_lost_focus(GdkEventFocus *event) {

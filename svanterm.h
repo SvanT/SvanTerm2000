@@ -24,7 +24,8 @@ class Terminal : public Gtk::Box {
         static void vte_beep(VteTerminal *vte, gpointer user_data);
         static gboolean vte_child_exited(GtkWidget *widget, GdkEventExpose *event, gpointer user_data);
         static gboolean vte_click(GtkWidget *vte, GdkEvent *event, gpointer user_data);
-        static gboolean vte_focus_event(GtkWidget *vte, GdkEvent *event, gpointer user_data);
+        static gboolean vte_got_focus(GtkWidget *vte, GdkEvent *event, gpointer user_data);
+        static gboolean vte_lost_focus(GtkWidget *vte, GdkEvent *event, gpointer user_data);
         static void vte_selection_changed(VteTerminal *terminal, gpointer user_data);
         static void vte_title_changed(VteTerminal *widget, gpointer user_data);
 
