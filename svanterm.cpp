@@ -16,18 +16,16 @@
         - sudo ln -s /usr/local/lib/libvte-2.91.so.0 /usr/lib/
 
     TODOS:
-    - Broadcast to terminals
     - Resize splitter/terminal hotkey
     - When dragging terminal to the tabcontrol from above, it doesn't dock until coming to the bottom.
     - The active terminal cursor is visible while another program has the focus
     - Flickering on changing tab (might try black background or some buffering)
     - Move all style to CSS
-    - Remember state of other splitters when going left and right again
 */
 
+bool broadcast_active = false;
 FindWindow *find_window = NULL;
 Tabcontrol *current_dragged_tab = NULL;
-Terminal *find_selected_terminal = NULL;
 TerminalDocker *docker = NULL;
 
 Splitter::Splitter(Gtk::Container *parent, Gtk::Widget *pane1, Gtk::Widget *pane2, Gtk::Orientation orientation) {
@@ -229,10 +227,6 @@ void TerminalWindow::walk_terminal(int direction) {
     }
 }
 bool TerminalWindow::KeyPress(GdkEventKey* event) {
-    // for (auto terminal : build_terminal_list(tabcontrol.get_nth_page(tabcontrol.get_current_page()))) {
-    //     g_signal_emit_by_name(terminal->vte, "key-press-event", event, NULL);
-    // }
-
     TerminalWindow *window;
     auto focus_child = get_focus();
     if (focus_child == NULL)
@@ -302,6 +296,11 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
                 terminal->update_title();
                 return true;
 
+            case GDK_KEY_B:
+                broadcast_active = !broadcast_active;
+                update_active_terminals();
+                return true;
+
             case GDK_KEY_E:
             case GDK_KEY_R:
                 Gtk::Container *parent = terminal->get_parent();
@@ -339,6 +338,13 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
                 tabcontrol.next_page();
                 return true;
         }
+    }
+
+    if (broadcast_active) {
+        for (auto terminal : build_terminal_list(tabcontrol.get_nth_page(tabcontrol.get_current_page()))) {
+            g_signal_emit_by_name(terminal->vte, "key-press-event", event, NULL);
+        }
+        return true;
     }
 
     return false;
@@ -461,6 +467,32 @@ std::vector<Terminal *> build_terminal_list(Gtk::Widget *widget, std::vector<Ter
         list->push_back(terminal);
 
     return *list;
+}
+void update_active_terminals() {
+    for (auto window : find_window->list_toplevels()) {
+        if (auto terminalwindow = dynamic_cast<TerminalWindow *>(window)) {
+            auto focus_child = terminalwindow->get_focus();
+            Terminal *focus_terminal = NULL;
+
+            if (find_window->is_visible())
+                focus_terminal = find_window->selected_terminal;
+            else if (terminalwindow->has_toplevel_focus() && focus_child != NULL)
+                focus_terminal = dynamic_cast<Terminal *>(focus_child->get_parent()->get_parent());
+
+            terminalwindow->update_title();
+            auto active_page = terminalwindow->tabcontrol.get_nth_page(
+                terminalwindow->tabcontrol.get_current_page());
+            if (auto tabframe = dynamic_cast<TabFrame *>(active_page))
+                tabframe->update_title();
+
+            for (auto terminal : build_terminal_list(active_page)) {
+                if (broadcast_active && terminalwindow->has_toplevel_focus())
+                    terminal->vte_set_active(true);
+                else
+                    terminal->vte_set_active(terminal == focus_terminal);
+            }
+        }
+    }
 }
 void load_css() {
     auto context = Gtk::StyleContext::create();

@@ -24,6 +24,7 @@ void FindWindow::row_selected(Gtk::ListBoxRow* row) {
     TabFrame *tab_frame= get_tab_frame(terminal);
     Tabcontrol *tabcontrol = static_cast<Tabcontrol *>(tab_frame->get_parent());
     tabcontrol->set_current_page(tabcontrol->page_num(*tab_frame));
+    selected_terminal = terminal;
     terminal->focus_vte();
 
     static_cast<Gtk::Window *>(tabcontrol->get_parent())->present();

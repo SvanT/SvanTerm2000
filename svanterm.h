@@ -24,8 +24,7 @@ class Terminal : public Gtk::Box {
         static void vte_beep(VteTerminal *vte, gpointer user_data);
         static gboolean vte_child_exited(GtkWidget *widget, GdkEventExpose *event, gpointer user_data);
         static gboolean vte_click(GtkWidget *vte, GdkEvent *event, gpointer user_data);
-        static gboolean vte_got_focus(GtkWidget *vte, GdkEvent *event, gpointer user_data);
-        static gboolean vte_lost_focus(GtkWidget *vte, GdkEvent *event, gpointer user_data);
+        static gboolean vte_focus_event(GtkWidget *vte, GdkEvent *event, gpointer user_data);
         static void vte_selection_changed(VteTerminal *terminal, gpointer user_data);
         static void vte_title_changed(VteTerminal *widget, gpointer user_data);
 
@@ -86,6 +85,7 @@ class FindWindow : public Gtk::Window {
 
     public:
         Gtk::ListBox list_box;
+        Terminal *selected_terminal = NULL;
 
         FindWindow();
         void show_find(Gtk::Window *calling_window);
@@ -147,5 +147,6 @@ void remove_from_docker_gdkwindow_map(GtkWidget *widget, gpointer user_data);
 TabFrame *get_tab_frame(Gtk::Widget *widget);
 std::vector<Terminal *> build_terminal_list(Gtk::Widget *widget, std::vector<Terminal *> *list = new std::vector<Terminal *>);
 std::string getexepath();
+void update_active_terminals();
 void load_css();
 int main(int argc, char *argv[]);

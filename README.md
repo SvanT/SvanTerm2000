@@ -25,6 +25,7 @@ Keyboard shortcuts
 |Ctrl-Shift-F      |Find terminal (type what you want to search for, cycle through the results with up/down-arrows)|
 |Ctrl-Shift-I      |Find in scrollback|
 |Ctrl-Shift-M      |Rename current tab|
+|Ctrl-Shift-B      |Toggle broadcast to all terminals in tab|
 
 Tips and tricks
 ===============

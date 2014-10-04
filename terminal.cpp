@@ -4,8 +4,6 @@ long last_notification_timestamp;
 extern FindWindow *find_window;
 extern TerminalDocker *docker;
 
-Terminal *last_active_terminal = NULL;
-
 void Terminal::kill_vte() {
     kill(child_pid, 9);
 }
@@ -39,24 +37,8 @@ gboolean Terminal::vte_click(GtkWidget *vte, GdkEvent *event, gpointer user_data
         _exit(0);
     }
 }
-gboolean Terminal::vte_got_focus(GtkWidget *vte, GdkEvent *event, gpointer user_data) {
-    Terminal *_this = static_cast<Terminal *>(user_data);
-    if (find_window->is_visible())
-        find_window->present();
-    else {
-        _this->vte_set_active(TRUE);
-        get_tab_frame(_this)->update_title();
-    }
-
-    // To make sure this terminal is selected next time this tab is selected
-    get_tab_frame(_this)->set_focus_chain(std::vector<Gtk::Widget *>(1, _this));
-    return FALSE;
-}
-gboolean Terminal::vte_lost_focus(GtkWidget *vte, GdkEvent *event, gpointer user_data) {
-    Terminal *_this = static_cast<Terminal *>(user_data);
-    if (!find_window->is_visible())
-        _this->vte_set_active(FALSE);
-
+gboolean Terminal::vte_focus_event(GtkWidget *vte, GdkEvent *event, gpointer user_data) {
+    update_active_terminals();
     return FALSE;
 }
 void Terminal::vte_selection_changed(VteTerminal *vte, gpointer user_data) {
@@ -112,8 +94,8 @@ Terminal::Terminal() {
     g_signal_connect(vte, "beep", G_CALLBACK(Terminal::vte_beep), this);
     g_signal_connect(vte, "child-exited", G_CALLBACK(Terminal::vte_child_exited), this);
     g_signal_connect(vte, "button-press-event", G_CALLBACK(Terminal::vte_click), this);
-    g_signal_connect(vte, "focus-in-event", G_CALLBACK(Terminal::vte_got_focus), this);
-    g_signal_connect(vte, "focus-out-event", G_CALLBACK(Terminal::vte_lost_focus), this);
+    g_signal_connect(vte, "focus-in-event", G_CALLBACK(Terminal::vte_focus_event), this);
+    g_signal_connect(vte, "focus-out-event", G_CALLBACK(Terminal::vte_focus_event), this);
     g_signal_connect(vte, "selection-changed", G_CALLBACK(Terminal::vte_selection_changed), this);
     g_signal_connect(vte, "window-title-changed", G_CALLBACK(Terminal::vte_title_changed), this);
 
@@ -140,7 +122,6 @@ Terminal::Terminal() {
     find_window->list_box.prepend(find_label);
 }
 Terminal::~Terminal() {
-    last_active_terminal = NULL;
     find_window->list_box.remove(*find_label.get_parent());
     gtk_widget_destroy(vte);
 }
@@ -170,9 +151,6 @@ bool Terminal::searchentry_keypress(GdkEventKey* event) {
     return false;
 }
 void Terminal::vte_set_active(gboolean active) {
-    if (active && last_active_terminal)
-        last_active_terminal->vte_set_active(false);
-
     GtkWidget *terminal = gtk_widget_get_parent(gtk_widget_get_parent(vte));
     GdkRGBA terminal_color;
 
@@ -185,11 +163,12 @@ void Terminal::vte_set_active(gboolean active) {
     }
 
     vte_terminal_set_color_foreground((VteTerminal *)vte, &terminal_color);
-    last_active_terminal = this;
 }
 void Terminal::focus_vte() {
+    // To make sure this terminal is selected next time this tab is selected
+    //get_tab_frame(this)->set_focus_chain(std::vector<Gtk::Widget *>(1, this));
+
     gtk_window_set_focus(GTK_WINDOW(get_toplevel()->gobj()), vte);
-    vte_set_active(true);
 }
 bool Terminal::searchentry_lost_focus(GdkEventFocus *event) {
     if (!get_tab_frame(this)->get_focus_child())
