@@ -143,6 +143,8 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
                 return true;
 
             case GDK_KEY_B:
+                // Need confirmation dialog for this
+                return true;
                 broadcast_active = !broadcast_active;
                 update_active_terminals();
                 return true;
