@@ -148,7 +148,7 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
                 return true;
 
             case GDK_KEY_B:
-                if (confirm_broadcast()) {
+                if (broadcast_active || confirm_broadcast()) {
                     broadcast_active = !broadcast_active;
                     update_active_terminals();
                 }
@@ -209,7 +209,6 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
     }
 
     if (broadcast_active) {
-        broadcast_active = false;
         gboolean ret;
         for (auto terminal : build_terminal_list(tabcontrol.get_nth_page(tabcontrol.get_current_page()))) {
             g_signal_emit_by_name(terminal->vte, "key-press-event", event, &ret);
