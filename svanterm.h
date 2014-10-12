@@ -129,6 +129,7 @@ class TerminalDocker : public Gtk::Window {
 
 class TerminalWindow : public Gtk::Window {
     private:
+        bool confirm_broadcast();
         bool KeyPress(GdkEventKey* event);
         void resize_terminal(int direction);
         void walk_terminal(int direction);

@@ -80,6 +80,11 @@ void TerminalWindow::walk_terminal(int direction) {
         nearest_terminal->focus_vte();
     }
 }
+bool TerminalWindow::confirm_broadcast() {
+  Gtk::MessageDialog dialog("This will broadcast your keyboard input to all terminals in the current tab, continue?",
+                                      false, Gtk::MESSAGE_WARNING, Gtk::BUTTONS_YES_NO, true);
+  return dialog.run() == Gtk::RESPONSE_YES;
+}
 bool TerminalWindow::KeyPress(GdkEventKey* event) {
     TerminalWindow *window;
     auto focus_child = get_focus();
@@ -143,10 +148,10 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
                 return true;
 
             case GDK_KEY_B:
-                // Need confirmation dialog for this
-                return true;
-                broadcast_active = !broadcast_active;
-                update_active_terminals();
+                if (confirm_broadcast()) {
+                    broadcast_active = !broadcast_active;
+                    update_active_terminals();
+                }
                 return true;
 
             case GDK_KEY_Up:
@@ -204,8 +209,9 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
     }
 
     if (broadcast_active) {
+        broadcast_active = false;
+        gboolean ret;
         for (auto terminal : build_terminal_list(tabcontrol.get_nth_page(tabcontrol.get_current_page()))) {
-            gboolean ret;
             g_signal_emit_by_name(terminal->vte, "key-press-event", event, &ret);
         }
         return true;
