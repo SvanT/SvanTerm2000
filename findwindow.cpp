@@ -37,8 +37,13 @@ bool FindWindow::KeyPress(GdkEventKey* event) {
 
     if (event->keyval == GDK_KEY_Up || event->keyval == GDK_KEY_Down) {
         Gtk::ListBoxRow *selected_row = list_box.get_selected_row();
+        int selected_index = -1;
+        if (selected_row)
+            selected_index = selected_row->get_index();
+        else if (event->keyval == GDK_KEY_Up)
+            selected_index = 0;
+
         Gtk::ListBoxRow *new_row;
-        int selected_index = selected_row->get_index();
         int new_index = selected_index;
         int length = list_box.get_children().size();
 
@@ -77,10 +82,8 @@ void FindWindow::show_find(Gtk::Window *calling_window) {
     calling_window->get_size(width, height);
     get_size(find_width, find_height);
     move(x + width/2 - find_width/2, y + height/2 - find_height/2);
+    list_box.unselect_row();
     show_all();
-
-    Gtk::ListBoxRow *row = list_box.get_row_at_index(0);
-    list_box.select_row(*row);
     set_focus(search_box);
 }
 void FindWindow::row_activated(Gtk::ListBoxRow* row) {
