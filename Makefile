@@ -1,5 +1,5 @@
 all: asdsvanterm.o asdfindwindow.o asdterminal.o asdterminaldocker.o asdterminalwindow.o
-	g++ -O3 build/svanterm.o build/findwindow.o build/terminal.o build/terminaldocker.o build/terminalwindow.o -o svanterm `pkg-config --libs gtk+-3.0 vte-2.91 gtkmm-3.0` -l notify
+	g++ -O3 build/svanterm.o build/findwindow.o build/terminal.o build/terminaldocker.o build/terminalwindow.o -o svanterm `pkg-config --libs gtk+-3.0 vte-2.90 gtkmm-3.0` -l notify
 
 asdsvanterm.o:
 	mkdir -p build

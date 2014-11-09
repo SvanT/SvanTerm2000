@@ -4,6 +4,15 @@ long last_notification_timestamp;
 extern FindWindow *find_window;
 extern TerminalDocker *docker;
 
+char *vte_terminal_match_check_event(VteTerminal *vte, GdkEventButton *event) {
+    int tag;
+
+    glong column = ((glong) (event->x) / vte_terminal_get_char_width(VTE_TERMINAL(vte)));
+    glong row = ((glong) (event->y) / vte_terminal_get_char_height(VTE_TERMINAL(vte)));
+    
+    return vte_terminal_match_check(VTE_TERMINAL(vte), column, row, &tag);
+}
+
 void Terminal::kill_vte() {
     kill(child_pid, 9);
 }
@@ -20,12 +29,13 @@ gboolean Terminal::vte_child_exited(GtkWidget *widget, GdkEventExpose *event, gp
     Terminal *_this = static_cast<Terminal *>(user_data);
     static_cast<Frame *>(_this->get_parent())->destroy();
 }
+
 gboolean Terminal::vte_click(GtkWidget *vte, GdkEvent *event, gpointer user_data) {
     GdkEventButton *button_event = (GdkEventButton *)event;
     if (button_event->button != 1 || !(button_event->state & GDK_CONTROL_MASK))
         return FALSE;
 
-    const char *url = vte_terminal_match_check_event(VTE_TERMINAL(vte), event, 0);
+    const char *url = vte_terminal_match_check_event(VTE_TERMINAL(vte), (GdkEventButton *)event);
     if (!url)
         return FALSE;
 
@@ -86,9 +96,8 @@ void Terminal::vte_title_changed(VteTerminal *widget, gpointer user_data) {
 Terminal::Terminal() {
     vte = vte_terminal_new();
     char *argv[] = { vte_get_user_shell(), NULL };
-    vte_terminal_spawn_sync(VTE_TERMINAL(vte), VTE_PTY_DEFAULT, NULL, argv, NULL,
-                            (GSpawnFlags)0, NULL,
-                            NULL, &child_pid, NULL, NULL);
+    vte_terminal_fork_command_full(VTE_TERMINAL(vte), VTE_PTY_DEFAULT, NULL, argv, NULL,
+                                   (GSpawnFlags)0, NULL, NULL, &child_pid, NULL);
     set_orientation(Gtk::ORIENTATION_VERTICAL);
     scrollbox.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
     scrollbar.set_orientation(Gtk::ORIENTATION_VERTICAL);
@@ -140,12 +149,12 @@ bool Terminal::searchentry_keypress(GdkEventKey* event) {
     if (event->keyval == GDK_KEY_Return || event->keyval == GDK_KEY_KP_Enter) {
         if (event->state & GDK_SHIFT_MASK) {
             if (!vte_terminal_search_find_next((VteTerminal *)vte)) {
-                vte_terminal_unselect_all((VteTerminal *)vte);
+                vte_terminal_select_none((VteTerminal *)vte);
                 vte_terminal_search_find_next((VteTerminal *)vte);
             }
         } else {
             if (!vte_terminal_search_find_previous((VteTerminal *)vte)) {
-                vte_terminal_unselect_all((VteTerminal *)vte);
+                vte_terminal_select_none((VteTerminal *)vte);
                 vte_terminal_search_find_previous((VteTerminal *)vte);
             }
         }
@@ -153,21 +162,21 @@ bool Terminal::searchentry_keypress(GdkEventKey* event) {
     }
 
     GRegex *regex = g_regex_new(searchentry.get_text().c_str(), G_REGEX_CASELESS, (GRegexMatchFlags)0, 0);
-    vte_terminal_unselect_all((VteTerminal *)vte);
-    vte_terminal_search_set_gregex((VteTerminal *)vte, regex, (GRegexMatchFlags)0);
+    vte_terminal_select_none((VteTerminal *)vte);
+    vte_terminal_search_set_gregex((VteTerminal *)vte, regex);
     vte_terminal_search_find_previous((VteTerminal *)vte);
     return false;
 }
 void Terminal::vte_set_active(gboolean active) {
     GtkWidget *terminal = gtk_widget_get_parent(gtk_widget_get_parent(vte));
-    GdkRGBA terminal_color;
+    GdkColor terminal_color;
 
     if (active) {
         set_name("terminal_active");
-        terminal_color = (GdkRGBA){.85, .85, .85, 1};
+        terminal_color = (GdkColor){0, 55000, 55000, 55000};
     } else {
         set_name("terminal_inactive");
-        terminal_color = (GdkRGBA){.6, .6, .6, 1};
+        terminal_color = (GdkColor){0, 40000, 40000, 40000};
     }
 
     vte_terminal_set_color_foreground((VteTerminal *)vte, &terminal_color);
