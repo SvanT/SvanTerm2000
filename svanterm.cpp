@@ -8,12 +8,7 @@
     - libgtk-3-dev
     - libgtkmm-3.0-dev
     - libnotify-dev
-    - VTE 0.37.2
-        - intltool
-        - libgirepository1.0-dev
-        - valac-0.22
-        - libxml2-utils
-        - sudo ln -s /usr/local/lib/libvte-2.91.so.0 /usr/lib/
+    - libvte-2.90-dev
 
     TODOS:
     - When dragging terminal to the tabcontrol from above, it doesn't dock until coming to the bottom.
