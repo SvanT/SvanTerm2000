@@ -96,8 +96,6 @@ Terminal::Terminal() {
     eventbox.add(label);
     eventbox.signal_button_press_event().connect(mem_fun(this, &Terminal::header_button_press));
 
-    vte_terminal_set_word_chars(VTE_TERMINAL(vte), "-A-Za-z0-9,./?%%&#:_=+@~");
-
     GRegex *regex = g_regex_new("(https?://|www\\.)[^\\s]*", (GRegexCompileFlags)0, (GRegexMatchFlags)0, 0);
     vte_terminal_match_add_gregex(VTE_TERMINAL(vte), regex, (GRegexMatchFlags)0);
     vte_terminal_set_scrollback_lines(VTE_TERMINAL(vte), 10000);
