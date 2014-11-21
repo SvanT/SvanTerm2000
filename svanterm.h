@@ -1,6 +1,6 @@
 #include <gtkmm.h>
 #include <libnotify/notify.h>
-#include <vte-2.90/vte/vte.h>
+#include <vte-2.91/vte/vte.h>
 
 class Terminal;
 
@@ -153,4 +153,3 @@ std::string getexepath();
 void update_active_terminals();
 void load_css();
 int main(int argc, char *argv[]);
-char *vte_terminal_match_check_event(VteTerminal *vte, GdkEventButton *event);
