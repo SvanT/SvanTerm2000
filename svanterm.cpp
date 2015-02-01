@@ -59,8 +59,12 @@ bool TabFrame::labelentry_lost_focus(GdkEventFocus *event) {
 }
 bool TabFrame::labelentry_keypress(GdkEventKey* event) {
     if (event->keyval == GDK_KEY_Escape || event->keyval == GDK_KEY_Return ||
-        event->keyval == GDK_KEY_KP_Enter)
+        event->keyval == GDK_KEY_KP_Enter) {
             label_entry.hide();
+        return true;
+    }
+
+    return false;
 }
 TabFrame::TabFrame(Terminal *terminal) {
     g_signal_connect(label_eventbox.gobj(), "realize", G_CALLBACK(add_to_docker_gdkwindow_map), this);
