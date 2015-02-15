@@ -96,7 +96,8 @@ bool TerminalWindow::KeyPress(GdkEventKey* event) {
 
     /* Shift-Insert is implemented in VTE, however it seems to fail under certain circumstances.
         We implement it here instead */
-    if (event->state & GDK_SHIFT_MASK && event->keyval == GDK_KEY_Insert) {
+    if (event->state & GDK_SHIFT_MASK && (event->keyval == GDK_KEY_Insert ||
+        event->state & GDK_CONTROL_MASK && event->keyval == GDK_KEY_V)) {
             vte_terminal_paste_clipboard(VTE_TERMINAL(focus_child->gobj()));
             return true;
     }

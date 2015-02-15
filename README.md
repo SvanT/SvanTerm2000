@@ -4,7 +4,7 @@ Keyboard shortcuts
 ==================
 |Shortcut          |Action
 |------------------|------
-|Shift-Insert      |Paste from clipboard|
+|Ctrl-Shift-V / Shift-Insert|Paste from clipboard|
 |Ctrl-Shift-T      |Create tab|
 |Ctrl-Shift-W      |Close tab|
 |Ctrl-Shift-E      |Horizontal split|
