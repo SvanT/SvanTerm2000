@@ -267,8 +267,8 @@ int main(int argc, char *argv[]) {
     find_window = new FindWindow;
     load_css();
     TerminalWindow *window = new TerminalWindow;
-    window->tabcontrol.add_tab();
     window->show_all();
+    window->tabcontrol.add_tab();
 
     Gtk::Main::run();
     return 0;
