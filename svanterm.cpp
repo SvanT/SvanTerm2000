@@ -29,6 +29,7 @@ TerminalDocker *docker = NULL;
 
 Splitter::Splitter(Gtk::Container *parent, Gtk::Widget *pane1, Gtk::Widget *pane2, Gtk::Orientation orientation) {
     set_orientation(orientation);
+    gtk_paned_set_wide_handle(this->gobj(), true);
     Gtk::Requisition min_size, size;
     parent->get_preferred_size(min_size, size);
     if (orientation == Gtk::ORIENTATION_HORIZONTAL)
