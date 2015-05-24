@@ -17,12 +17,12 @@ bool TerminalDocker::button_release_event(GdkEventButton *event) {
     Tabcontrol *tabcontrol;
     if (dock_to == NULL) {
         TerminalWindow *window = new TerminalWindow;
+        window->show();
         window->tabcontrol.add_tab(manage(new TabFrame(dock_from)));
         window->show_all();
 
         GdkEventButton *button_event = (GdkEventButton *)event;
         window->move(button_event->x_root, button_event->y_root);
-        window->show();
 
         old_frame->destroy();
 
