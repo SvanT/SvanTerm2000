@@ -1,3 +1,4 @@
+GtkWindow { background-color: #444; border: 1px solid #888; border-radius: 3px; }
 GtkEventBox { background-color: rgba (0, 0, 0, 0); }
 GtkFrame { padding:0px; }
 VteTerminal { font:Monospace 11; }
