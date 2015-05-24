@@ -60,8 +60,8 @@ bool TerminalDocker::motion_notify_event(GdkEventMotion *event) {
         try {
             widget = gdkwindow_to_widget.at(window);
         } catch (const std::out_of_range& oor) {
-            // Some other control inside svanterm (main window), ignore this
-            return FALSE;
+            // Some other control inside svanterm (main window), get the toplevel
+            widget = gdkwindow_to_widget.at(gdk_window_get_toplevel(window));
         }
     }
 
