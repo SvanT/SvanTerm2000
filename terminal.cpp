@@ -50,7 +50,9 @@ gboolean Terminal::vte_lost_focus(GtkWidget *vte, GdkEvent *event, gpointer user
     return FALSE;
 }
 void Terminal::vte_selection_changed(VteTerminal *vte, gpointer user_data) {
-    vte_terminal_copy_clipboard(vte);
+    if (vte_terminal_get_has_selection(vte)) {
+        vte_terminal_copy_clipboard(vte);
+    }
 }
 void Terminal::vte_beep(VteTerminal *vte, gpointer user_data) {
     Terminal *_this = static_cast<Terminal *>(user_data);
