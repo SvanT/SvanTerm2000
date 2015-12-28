@@ -130,6 +130,9 @@ Terminal::Terminal() {
     find_label.terminal = this;
     find_label.set_alignment(0.0, 0.5);
     find_window->list_box.prepend(find_label);
+
+    signal_motion_notify_event().connect(mem_fun(docker, &TerminalDocker::motion_notify_event));
+    signal_button_release_event().connect(mem_fun(docker, &TerminalDocker::button_release_event));
 }
 Terminal::~Terminal() {
     find_window->list_box.remove(*find_label.get_parent());
@@ -180,4 +183,14 @@ void Terminal::focus_vte() {
 bool Terminal::searchentry_lost_focus(GdkEventFocus *event) {
     if (!get_tab_frame(this)->get_focus_child())
         focus_vte();
+}
+bool Terminal::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
+    Box::on_draw(cr);
+
+    printf("LOL");
+    printf("%d %d %d %d\n", dock_hint.x, dock_hint.y, dock_hint.width, dock_hint.height);
+    fflush(stdout);
+    cr->set_source_rgb(1, 0, 0);
+    cr->rectangle(dock_hint.x, dock_hint.y, dock_hint.x+dock_hint.width, dock_hint.y+dock_hint.height);
+    cr->fill();
 }

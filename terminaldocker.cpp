@@ -10,8 +10,13 @@ void remove_from_docker_gdkwindow_map(GtkWidget *widget, gpointer user_data) {
 }
 
 bool TerminalDocker::button_release_event(GdkEventButton *event) {
-    gdk_device_ungrab(gdk_event_get_device((GdkEvent *)event), GDK_CURRENT_TIME);
-    hide();
+    if (dock_from == NULL) {
+        return FALSE;
+    }
+    if (auto terminal = dynamic_cast<Terminal *>(dock_to)) {
+        terminal->dock_hint = GdkRectangle{0, 0, 0, 0};;
+        terminal->queue_draw();
+    }
 
     Frame *old_frame = static_cast<Frame *>(dock_from->get_parent());
     Tabcontrol *tabcontrol;
@@ -22,7 +27,7 @@ bool TerminalDocker::button_release_event(GdkEventButton *event) {
         window->show_all();
 
         GdkEventButton *button_event = (GdkEventButton *)event;
-        window->move(button_event->x_root, button_event->y_root);
+        window->move(button_event->x, button_event->y);
 
         old_frame->destroy();
 
@@ -49,10 +54,20 @@ bool TerminalDocker::button_release_event(GdkEventButton *event) {
         static_cast<TerminalWindow *>(dock_to->get_toplevel())->present();
         dock_from->focus_vte();
     }
+    dock_from = NULL;
     return FALSE;
 }
 
 bool TerminalDocker::motion_notify_event(GdkEventMotion *event) {
+    if (dock_from == NULL) {
+        return FALSE;
+    }
+
+    if (auto terminal = dynamic_cast<Terminal *>(dock_to)) {
+        terminal->dock_hint = GdkRectangle{0, 0, 0, 0};
+        terminal->queue_draw();
+    }
+
     GdkWindow *window = gdk_device_get_window_at_position(event->device, NULL, NULL);
     Gtk::Widget *widget = NULL;
 
@@ -72,54 +87,50 @@ bool TerminalDocker::motion_notify_event(GdkEventMotion *event) {
     } else if (widget != this)
         dock_to = widget;
 
-    move_dock_hint(dock_to, (int)event->x_root, (int)event->y_root);
+    move_dock_hint(dock_to, (int)event->x, (int)event->y);
     return FALSE;
 }
 
 TerminalDocker::TerminalDocker() : Gtk::Window(Gtk::WINDOW_POPUP) {
-    set_opacity(0.5);
-    set_decorated(FALSE);
-    signal_button_release_event().connect(mem_fun(this, &TerminalDocker::button_release_event));
-    signal_motion_notify_event().connect(mem_fun(this, &TerminalDocker::motion_notify_event));
-    g_signal_connect(gobj(), "realize", G_CALLBACK(add_to_docker_gdkwindow_map), this);
-    g_signal_connect(gobj(), "unrealize", G_CALLBACK(add_to_docker_gdkwindow_map), NULL);
 }
 
 void TerminalDocker::init_drag(Terminal *terminal, GdkEventButton *event) {
     dock_to = dock_from = terminal;
-    show_now();
-    move_dock_hint(dock_from, (int)event->x_root, (int)event->y_root);
-
-    gdk_device_grab(gdk_event_get_device((GdkEvent *)event), gtk_widget_get_window((GtkWidget *)gobj()),
-                    GDK_OWNERSHIP_APPLICATION, FALSE,
-                    (GdkEventMask)(GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK),
-                    NULL, GDK_CURRENT_TIME);
+    TerminalWindow *window = static_cast<TerminalWindow *>(terminal->get_toplevel());
+    dock_from->translate_coordinates(window->tabcontrol, 0, 0, dock_from_x, dock_from_y);
 }
 
 void TerminalDocker::move_dock_hint(Gtk::Widget *widget, int x, int y) {
+    printf("%d %d\n", x, y);
+    fflush(stdout);
+
+    TerminalWindow *window = static_cast<TerminalWindow *>(widget->get_toplevel());
+
+    int widget_x, widget_y;
+    widget->translate_coordinates(window->tabcontrol, 0, 0, widget_x, widget_y);
+
+    x = x - widget_x + dock_from_x;
+    y = y - widget_y + dock_from_y;
+
+    // dock_from->translate_coordinates((Gtk::Widget &)*widget, x, y, x, y);
+
     if (widget == NULL) {
         move(x + 5, y + 5);
         resize(900, 600);
         return;
     }
 
-    int notebook_x, notebook_y, widget_x, widget_y;
-    TerminalWindow *window = static_cast<TerminalWindow *>(widget->get_toplevel());
-    widget->translate_coordinates(window->tabcontrol, 0, 0, widget_x, widget_y);
-    gdk_window_get_origin(gtk_widget_get_window(GTK_WIDGET(window->tabcontrol.gobj())), &notebook_x, &notebook_y);
-    widget_x += notebook_x;
-    widget_y += notebook_y;
 
     if (Tabcontrol *tabcontrol = dynamic_cast<Tabcontrol *>(widget)) {
         resize(tabcontrol->get_width(), 3);
-        move(widget_x, widget_y);
+        // move(widget_x, widget_y);
         return;
     }
 
     int width = widget->get_width();
     int height = widget->get_height();
-    int from_center_x = x - (widget_x + width/2);
-    int from_center_y = y - (widget_y + height/2);
+    int from_center_x = x - width/2;
+    int from_center_y = y - height/2;
 
     if (ABS(from_center_x) > ABS(from_center_y))
         if (from_center_x > 0)
@@ -132,20 +143,22 @@ void TerminalDocker::move_dock_hint(Gtk::Widget *widget, int x, int y) {
         else
             dock_pos = Gtk::POS_TOP;
 
-    if (dock_pos == Gtk::POS_TOP || dock_pos == Gtk::POS_BOTTOM)
-        resize(width, height/2);
-    else
-        resize(width/2, height);
-
+    GdkRectangle rect;
     switch (dock_pos) {
         case Gtk::POS_TOP:
+            rect = GdkRectangle{0, 0, width, height/2};
+            break;
         case Gtk::POS_LEFT:
-            move(widget_x, widget_y);
+            rect = GdkRectangle{0, 0, width/2, height};
             break;
         case Gtk::POS_RIGHT:
-            move(widget_x + width/2, widget_y);
+            rect = GdkRectangle{width/2, 0, width/2, height};
             break;
         case Gtk::POS_BOTTOM:
-            move(widget_x, widget_y + height/2);
+            rect = GdkRectangle{0, height/2, width, height/2};
     }
+
+    dynamic_cast<Terminal *>(widget)->dock_hint = rect;
+
+    widget->queue_draw();
 }

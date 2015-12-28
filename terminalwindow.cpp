@@ -2,6 +2,7 @@
 
 extern bool broadcast_active;
 extern FindWindow *find_window;
+extern TerminalDocker *docker;
 
 void TerminalWindow::update_title() {
     auto focus = get_focus();

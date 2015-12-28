@@ -30,6 +30,7 @@ class Terminal : public Gtk::Box {
         static void vte_title_changed(VteTerminal *widget, gpointer user_data);
 
         bool searchentry_lost_focus(GdkEventFocus *event);
+        bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr) override;
 
     public:
         int child_pid;
@@ -43,6 +44,10 @@ class Terminal : public Gtk::Box {
         void focus_vte();
         void kill_vte();
         void update_title();
+        GdkRectangle dock_hint;
+
+        bool button_release_event(GdkEventButton* event);
+        bool motion_notify_event(GdkEventMotion* event);
 };
 
 class Frame : public Gtk::Frame {
@@ -117,7 +122,7 @@ class TerminalDocker : public Gtk::Window {
     public:
         std::map<GdkWindow*,Gtk::Widget*>gdkwindow_to_widget;
 
-        Terminal *dock_from;
+        Terminal *dock_from = NULL;
         Gtk::Widget *dock_to;
 
         TerminalDocker();
@@ -125,6 +130,8 @@ class TerminalDocker : public Gtk::Window {
         bool motion_notify_event(GdkEventMotion* event);
         void init_drag(Terminal *, GdkEventButton *event);
         void move_dock_hint(Gtk::Widget *widget, int x, int y);
+        int dock_from_x;
+        int dock_from_y;
 };
 
 class TerminalWindow : public Gtk::Window {
