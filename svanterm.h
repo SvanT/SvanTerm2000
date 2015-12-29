@@ -46,8 +46,9 @@ class Terminal : public Gtk::Box {
         void update_title();
         GdkRectangle dock_hint;
 
-        bool button_release_event(GdkEventButton* event);
-        bool motion_notify_event(GdkEventMotion* event);
+        bool on_my_drag_motion(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time);
+        bool on_my_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time);
+        void on_my_drag_begin(const Glib::RefPtr<Gdk::DragContext>& context);
 };
 
 class Frame : public Gtk::Frame {
@@ -117,21 +118,19 @@ class Tabcontrol : public Gtk::Notebook {
 };
 
 class TerminalDocker : public Gtk::Window {
-    Gtk::PositionType dock_pos;
 
     public:
+        Gtk::PositionType dock_pos;
         std::map<GdkWindow*,Gtk::Widget*>gdkwindow_to_widget;
 
         Terminal *dock_from = NULL;
         Gtk::Widget *dock_to;
 
         TerminalDocker();
-        bool button_release_event(GdkEventButton* event);
         bool motion_notify_event(GdkEventMotion* event);
         void init_drag(Terminal *, GdkEventButton *event);
         void move_dock_hint(Gtk::Widget *widget, int x, int y);
-        int dock_from_x;
-        int dock_from_y;
+        bool drag_drop_finish(Gtk::Widget *widget, int x, int y);
 };
 
 class TerminalWindow : public Gtk::Window {
