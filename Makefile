@@ -1,4 +1,4 @@
-all: asdsvanterm.o asdfindwindow.o asdterminal.o o asdterminalwindow.o
+all: asdsvanterm.o asdfindwindow.o asdterminal.o asdterminalwindow.o
 	g++ -O3 build/svanterm.o build/findwindow.o build/terminal.o build/terminalwindow.o -o svanterm `pkg-config --libs gtk+-3.0 vte-2.91 gtkmm-3.0` -l notify
 
 asdsvanterm.o:
