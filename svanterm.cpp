@@ -25,7 +25,7 @@
 bool broadcast_active = false;
 FindWindow *find_window = NULL;
 Tabcontrol *current_dragged_tab = NULL;
-TerminalDocker *docker = NULL;
+Terminal *dock_from = NULL;
 
 Splitter::Splitter(Gtk::Container *parent, Gtk::Widget *pane1, Gtk::Widget *pane2, Gtk::Orientation orientation) {
     #if GTK_MAJOR_VERSION > 3 || GTK_MINOR_VERSION > 15
@@ -71,9 +71,6 @@ bool TabFrame::labelentry_keypress(GdkEventKey* event) {
     return false;
 }
 TabFrame::TabFrame(Terminal *terminal) {
-    g_signal_connect(label_eventbox.gobj(), "realize", G_CALLBACK(add_to_docker_gdkwindow_map), this);
-    g_signal_connect(label_eventbox.gobj(), "unrealize", G_CALLBACK(remove_from_docker_gdkwindow_map), NULL);
-
     label_entry.signal_focus_out_event().connect(mem_fun(this, &TabFrame::labelentry_lost_focus));
     label_entry.signal_key_press_event().connect(mem_fun(this, &TabFrame::labelentry_keypress), false);
     label_eventbox.signal_button_press_event().connect(mem_fun(this, &TabFrame::label_button_press));
@@ -165,8 +162,12 @@ Tabcontrol::Tabcontrol() {
     set_scrollable(true);
 
     g_signal_connect(gobj(), "create-window", G_CALLBACK(Tabcontrol::detach_to_desktop), NULL);
-    g_signal_connect(gobj(), "realize", G_CALLBACK(add_to_docker_gdkwindow_map), this);
-    g_signal_connect(gobj(), "unrealize", G_CALLBACK(remove_from_docker_gdkwindow_map), NULL);
+
+    auto targets = drag_dest_get_target_list();
+    targets->add("SvanTerminal");
+
+    drag_dest_set_target_list(targets);
+    signal_drag_drop().connect(sigc::mem_fun(this, &Tabcontrol::on_my_drag_drop));
 }
 TabFrame *Tabcontrol::add_tab(TabFrame *tab) {
     append_page(*tab, tab->label_eventbox);
@@ -178,6 +179,14 @@ void Tabcontrol::page_added(Widget* page, guint page_num) {
     set_tab_reorderable(*tab, true);
     show_all_children();
     set_current_page(page_num);
+}
+bool Tabcontrol::on_my_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time) {
+    Frame *old_frame = static_cast<Frame *>(dock_from->get_parent());
+    add_tab(manage(new TabFrame(dock_from)));
+    old_frame->destroy();
+
+    static_cast<TerminalWindow *>(get_toplevel())->present();
+    dock_from->focus_vte();
 }
 
 Frame::Frame() {
@@ -267,7 +276,6 @@ void load_css() {
 int main(int argc, char *argv[]) {
     Gtk::Main app(argc, argv);
     notify_init("SvanTerm");
-    docker = new TerminalDocker;
     find_window = new FindWindow;
     load_css();
     TerminalWindow *window = new TerminalWindow;
