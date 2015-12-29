@@ -54,6 +54,7 @@ class Terminal : public Gtk::Box {
         void on_my_drag_begin(const Glib::RefPtr<Gdk::DragContext>& context);
         void on_my_drag_leave(const Glib::RefPtr<Gdk::DragContext>& context, guint time);
         bool on_my_drag_failed(const Glib::RefPtr<Gdk::DragContext>& context, Gtk::DragResult result);
+        void on_my_drag_end(const Glib::RefPtr<Gdk::DragContext>& context);
 };
 
 class Frame : public Gtk::Frame {
@@ -111,7 +112,6 @@ class Splitter : public Gtk::Paned {
 class Tabcontrol : public Gtk::Notebook {
     private:
         void tab_drag_begin(const Glib::RefPtr<Gdk::DragContext>& context);
-        gboolean tab_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time);
         static GtkNotebook* detach_to_desktop(GtkNotebook *widget, GtkWidget *frame, gint x, gint y, gpointer user_data);
         void page_removed(Widget* page, guint page_num);
         void switch_page(Widget* page, guint page_num);

@@ -121,16 +121,6 @@ bool TabFrame::label_button_press(GdkEventButton* event) {
 void Tabcontrol::tab_drag_begin(const Glib::RefPtr<Gdk::DragContext>& context) {
     current_dragged_tab = this;
 }
-gboolean Tabcontrol::tab_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context,
-                                   int x, int y, guint time) {
-    if (current_dragged_tab == this) {
-        /* Dragging a tab to itself causes the window to close itself because of tab count 0,
-           cancel the action */
-        gtk_drag_finish(context->gobj(), FALSE, FALSE, GDK_CURRENT_TIME);
-        return TRUE;
-    } else
-        return FALSE;
-}
 GtkNotebook* Tabcontrol::detach_to_desktop(GtkNotebook *widget, GtkWidget *frame, gint x, gint y, gpointer user_data) {
     TerminalWindow *window = new TerminalWindow;
     window->move(x, y);
@@ -155,19 +145,22 @@ Tabcontrol::Tabcontrol() {
     set_group_name("svanterm");
     signal_page_removed().connect(mem_fun(this, &Tabcontrol::page_removed));
     signal_drag_begin().connect(mem_fun(this, &Tabcontrol::tab_drag_begin));
-    signal_drag_drop().connect(mem_fun(this, &Tabcontrol::tab_drag_drop), false);
     signal_page_added().connect(mem_fun(this, &Tabcontrol::page_added));
     signal_switch_page().connect(mem_fun(this, &Tabcontrol::switch_page));
+    signal_drag_drop().connect(sigc::mem_fun(this, &Tabcontrol::on_my_drag_drop), false);
     set_can_focus(false);
     set_scrollable(true);
 
     g_signal_connect(gobj(), "create-window", G_CALLBACK(Tabcontrol::detach_to_desktop), NULL);
 
+    /* We need to be a drop target for terminals while still supporting the built in dragging of tabs
+       The following is trial and error created code to make that happen. */
+    std::vector<Gtk::TargetEntry> listTargets;
     auto targets = drag_dest_get_target_list();
     targets->add("SvanTerminal");
 
+    drag_dest_set(listTargets);
     drag_dest_set_target_list(targets);
-    signal_drag_drop().connect(sigc::mem_fun(this, &Tabcontrol::on_my_drag_drop));
 }
 TabFrame *Tabcontrol::add_tab(TabFrame *tab) {
     append_page(*tab, tab->label_eventbox);
@@ -181,12 +174,19 @@ void Tabcontrol::page_added(Widget* page, guint page_num) {
     set_current_page(page_num);
 }
 bool Tabcontrol::on_my_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time) {
-    Frame *old_frame = static_cast<Frame *>(dock_from->get_parent());
-    add_tab(manage(new TabFrame(dock_from)));
-    old_frame->destroy();
+    if (dock_from != NULL) {
+        Frame *old_frame = static_cast<Frame *>(dock_from->get_parent());
+        add_tab(manage(new TabFrame(dock_from)));
+        old_frame->destroy();
 
-    static_cast<TerminalWindow *>(get_toplevel())->present();
-    dock_from->focus_vte();
+        static_cast<TerminalWindow *>(get_toplevel())->present();
+        dock_from->focus_vte();
+    } else if (current_dragged_tab == this) {
+        /* Dragging a tab to itself causes the window to close itself because of tab count 0,
+           cancel the action */
+        gtk_drag_finish(context->gobj(), FALSE, FALSE, GDK_CURRENT_TIME);
+        return TRUE;
+    }
 }
 
 Frame::Frame() {

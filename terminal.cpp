@@ -130,13 +130,14 @@ Terminal::Terminal() {
     find_window->list_box.prepend(find_label);
 
     std::vector<Gtk::TargetEntry> listTargets;
-    listTargets.push_back( Gtk::TargetEntry("SvanTerminal") );
+    listTargets.push_back(Gtk::TargetEntry("SvanTerminal", Gtk::TARGET_SAME_APP, 0));
 
     eventbox.drag_source_set(listTargets);
 
     drag_dest_set(listTargets);
     eventbox.signal_drag_begin().connect(sigc::mem_fun(this, &Terminal::on_my_drag_begin));
     eventbox.signal_drag_failed().connect(sigc::mem_fun(this, &Terminal::on_my_drag_failed));
+    eventbox.signal_drag_end().connect(sigc::mem_fun(this, &Terminal::on_my_drag_end));
     signal_drag_motion().connect(sigc::mem_fun(this, &Terminal::on_my_drag_motion));
     signal_drag_drop().connect(sigc::mem_fun(this, &Terminal::on_my_drag_drop));
     signal_drag_leave().connect(sigc::mem_fun(this, &Terminal::on_my_drag_leave));
@@ -232,6 +233,12 @@ bool Terminal::on_my_drag_motion(const Glib::RefPtr<Gdk::DragContext>& context, 
     queue_draw();
 }
 bool Terminal::on_my_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time) {
+    dock_hint = GdkRectangle{0, 0, 0, 0};
+    queue_draw();
+
+    if (dock_from == this) {
+        return FALSE;
+    }
     Frame *old_frame = static_cast<Frame *>(dock_from->get_parent());
 
     switch (dock_pos) {
@@ -252,9 +259,6 @@ bool Terminal::on_my_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, in
     old_frame->destroy();
     static_cast<TerminalWindow *>(this->get_toplevel())->present();
     dock_from->focus_vte();
-
-    dock_hint = GdkRectangle{0, 0, 0, 0};
-    queue_draw();
 }
 void Terminal::on_my_drag_begin(const Glib::RefPtr<Gdk::DragContext>& context) {
     dock_from = this;
@@ -264,9 +268,6 @@ void Terminal::on_my_drag_leave(const Glib::RefPtr<Gdk::DragContext>& context, g
     queue_draw();
 }
 bool Terminal::on_my_drag_failed(const Glib::RefPtr<Gdk::DragContext>& context, Gtk::DragResult result) {
-    printf("FAILED %d\n\n", result);
-    fflush(stdout);
-
     Frame *old_frame = static_cast<Frame *>(dock_from->get_parent());
 
     if (result == Gtk::DRAG_RESULT_NO_TARGET) {
@@ -277,4 +278,7 @@ bool Terminal::on_my_drag_failed(const Glib::RefPtr<Gdk::DragContext>& context, 
 
         old_frame->destroy();
     }
+}
+void Terminal::on_my_drag_end(const Glib::RefPtr<Gdk::DragContext>& context) {
+    dock_from = NULL;
 }
