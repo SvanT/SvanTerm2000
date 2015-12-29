@@ -265,6 +265,7 @@ TerminalWindow::TerminalWindow() {
         printf("Failed to set icon");
         fflush(stdout);
     }
+    show_all();
 };
 bool TerminalWindow::delete_event(GdkEventAny *event) {
     for (auto tabframe : tabcontrol.get_children())
