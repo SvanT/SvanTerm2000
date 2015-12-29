@@ -18,7 +18,6 @@
     TODOS:
     - When dragging terminal to the tabcontrol from above, it doesn't dock until coming to the bottom.
     - The active terminal cursor is visible while another program has the focus
-    - Flickering on changing tab (might try black background or some buffering)
     - Move all style to CSS
 */
 
@@ -147,7 +146,7 @@ Tabcontrol::Tabcontrol() {
     signal_drag_begin().connect(mem_fun(this, &Tabcontrol::tab_drag_begin));
     signal_page_added().connect(mem_fun(this, &Tabcontrol::page_added));
     signal_switch_page().connect(mem_fun(this, &Tabcontrol::switch_page));
-    signal_drag_drop().connect(sigc::mem_fun(this, &Tabcontrol::on_my_drag_drop), false);
+    signal_drag_drop().connect(mem_fun(this, &Tabcontrol::on_my_drag_drop), false);
     set_can_focus(false);
     set_scrollable(true);
 
