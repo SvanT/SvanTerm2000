@@ -9,12 +9,9 @@ void Terminal::kill_vte() {
 }
 bool Terminal::header_button_press(GdkEventButton* event) {
     focus_vte();
-    if (event->button == 1) {
-        return FALSE;
-        dock_from = this;
-    }
-    else if (event->button == 2)
+    if (event->button == 2) {
         kill_vte();
+    }
 
     return TRUE;
 }

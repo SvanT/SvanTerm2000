@@ -16,8 +16,10 @@
         - sudo ln -s /usr/local/lib/libvte-2.91.so.0 /usr/lib/
 
     TODOS:
-    - When dragging terminal to the tabcontrol from above, it doesn't dock until coming to the bottom.
-    - The active terminal cursor is visible while another program has the focus
+    - Position the window when dragging outside terminal to new window
+    - Don't close the program when dragging the last tab to itself
+    - Style the dock hint a bit
+    - Possibly replace dock_from with dnd data send
     - Move all style to CSS
 */
 
