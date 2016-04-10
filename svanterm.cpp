@@ -150,7 +150,6 @@ void Tabcontrol::switch_page(Widget* page, guint page_num) {
         static_cast<TabFrame *>(get_nth_page(i))->label_label.set_name("");
 
     auto tabframe = static_cast<TabFrame *>(get_nth_page(page_num));
-    tabframe->label_label.set_name("active_tab");
     if (tabframe->get_focus_child() == NULL)
         build_terminal_list(tabframe)[0]->focus_vte();
 }
