@@ -1,15 +1,18 @@
-GtkWindow { background-color: #444; border: 1px solid #777; border-radius: 3px; }
-GtkEventBox { background-color: rgba (0, 0, 0, 0); }
-GtkFrame { padding:0px; }
-VteTerminal { font:Monospace 11; }
+vte-terminal {
+    font:Monospace 11;
+}
+box#terminal_active {
+    background-color: #c00;
+}
 
-#active_tab { font-weight:bold; }
-#terminal_active GtkEventBox { background-image: -gtk-gradient
-(linear, left top, left bottom, from (#f00), to (#640000)); }
+#terminal_active label {
+    color: #fff;
+}
 
-#terminal_active GtkLabel { color: #fff; }
+box#terminal_inactive {
+    background-color: #ccc;
+}
 
-#terminal_inactive GtkEventBox { background-image: -gtk-gradient
-(linear, left top, left bottom, from (#dcdcdc), to (#969696)); }
-
-#terminal_inactive GtkLabel { color: #000; }
+#terminal_inactive label {
+    color: #000;
+}
