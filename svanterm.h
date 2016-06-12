@@ -30,6 +30,9 @@ class Terminal : public Gtk::Box {
         static void vte_title_changed(VteTerminal *widget, gpointer user_data);
 
         bool searchentry_lost_focus(GdkEventFocus *event);
+        bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr) override;
+
+        int dock_pos;
 
     public:
         int child_pid;
@@ -43,6 +46,15 @@ class Terminal : public Gtk::Box {
         void focus_vte();
         void kill_vte();
         void update_title();
+        GdkRectangle dock_hint;
+
+    protected:
+        bool on_my_drag_motion(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time);
+        bool on_my_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time);
+        void on_my_drag_begin(const Glib::RefPtr<Gdk::DragContext>& context);
+        void on_my_drag_leave(const Glib::RefPtr<Gdk::DragContext>& context, guint time);
+        bool on_my_drag_failed(const Glib::RefPtr<Gdk::DragContext>& context, Gtk::DragResult result);
+        void on_my_drag_end(const Glib::RefPtr<Gdk::DragContext>& context);
 };
 
 class Frame : public Gtk::Frame {
@@ -100,7 +112,6 @@ class Splitter : public Gtk::Paned {
 class Tabcontrol : public Gtk::Notebook {
     private:
         void tab_drag_begin(const Glib::RefPtr<Gdk::DragContext>& context);
-        gboolean tab_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time);
         static GtkNotebook* detach_to_desktop(GtkNotebook *widget, GtkWidget *frame, gint x, gint y, gpointer user_data);
         void page_removed(Widget* page, guint page_num);
         void switch_page(Widget* page, guint page_num);
@@ -109,22 +120,7 @@ class Tabcontrol : public Gtk::Notebook {
         Tabcontrol();
         TabFrame *add_tab(TabFrame *tab = manage(new TabFrame));
         void page_added(Widget* page, guint page_num);
-};
-
-class TerminalDocker : public Gtk::Window {
-    Gtk::PositionType dock_pos;
-
-    public:
-        std::map<GdkWindow*,Gtk::Widget*>gdkwindow_to_widget;
-
-        Terminal *dock_from;
-        Gtk::Widget *dock_to;
-
-        TerminalDocker();
-        bool button_release_event(GdkEventButton* event);
-        bool motion_notify_event(GdkEventMotion* event);
-        void init_drag(Terminal *, GdkEventButton *event);
-        void move_dock_hint(Gtk::Widget *widget, int x, int y);
+        bool on_my_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time);
 };
 
 class TerminalWindow : public Gtk::Window {
@@ -145,8 +141,6 @@ class TerminalWindow : public Gtk::Window {
         void update_title();
 };
 
-void add_to_docker_gdkwindow_map(GtkWidget *widget, gpointer user_data);
-void remove_from_docker_gdkwindow_map(GtkWidget *widget, gpointer user_data);
 TabFrame *get_tab_frame(Gtk::Widget *widget);
 std::vector<Terminal *> build_terminal_list(Gtk::Widget *widget, std::vector<Terminal *> *list = new std::vector<Terminal *>);
 std::string getexepath();

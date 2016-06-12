@@ -2,17 +2,16 @@
 
 long last_notification_timestamp;
 extern FindWindow *find_window;
-extern TerminalDocker *docker;
+extern Terminal *dock_from;
 
 void Terminal::kill_vte() {
     kill(child_pid, 9);
 }
 bool Terminal::header_button_press(GdkEventButton* event) {
     focus_vte();
-    if (event->button == 1)
-        docker->init_drag(this, event);
-    else if (event->button == 2)
+    if (event->button == 2) {
         kill_vte();
+    }
 
     return TRUE;
 }
@@ -86,6 +85,7 @@ void Terminal::vte_title_changed(VteTerminal *widget, gpointer user_data) {
     _this->update_title();
 }
 Terminal::Terminal() {
+    dock_hint = GdkRectangle{0, 0, 0, 0};
     vte = vte_terminal_new();
     char *argv[] = { vte_get_user_shell(), NULL };
     vte_terminal_spawn_sync(VTE_TERMINAL(vte), VTE_PTY_DEFAULT, NULL, argv, NULL,
@@ -109,11 +109,6 @@ Terminal::Terminal() {
     g_signal_connect(vte, "selection-changed", G_CALLBACK(Terminal::vte_selection_changed), this);
     g_signal_connect(vte, "window-title-changed", G_CALLBACK(Terminal::vte_title_changed), this);
 
-    g_signal_connect(eventbox.gobj(), "realize", G_CALLBACK(add_to_docker_gdkwindow_map), this);
-    g_signal_connect(eventbox.gobj(), "unrealize", G_CALLBACK(remove_from_docker_gdkwindow_map), NULL);
-    g_signal_connect(vte, "realize", G_CALLBACK(add_to_docker_gdkwindow_map), this);
-    g_signal_connect(vte, "unrealize", G_CALLBACK(remove_from_docker_gdkwindow_map), NULL);
-
     searchbar.add(searchentry);
     searchbar.connect_entry(searchentry);
     searchentry.signal_focus_out_event().connect(mem_fun(this, &Terminal::searchentry_lost_focus));
@@ -130,6 +125,19 @@ Terminal::Terminal() {
     find_label.terminal = this;
     find_label.set_alignment(0.0, 0.5);
     find_window->list_box.prepend(find_label);
+
+    std::vector<Gtk::TargetEntry> listTargets;
+    listTargets.push_back(Gtk::TargetEntry("SvanTerminal", Gtk::TARGET_SAME_APP, 0));
+
+    eventbox.drag_source_set(listTargets);
+
+    drag_dest_set(listTargets);
+    eventbox.signal_drag_begin().connect(sigc::mem_fun(this, &Terminal::on_my_drag_begin));
+    eventbox.signal_drag_failed().connect(sigc::mem_fun(this, &Terminal::on_my_drag_failed));
+    eventbox.signal_drag_end().connect(sigc::mem_fun(this, &Terminal::on_my_drag_end));
+    signal_drag_motion().connect(sigc::mem_fun(this, &Terminal::on_my_drag_motion));
+    signal_drag_drop().connect(sigc::mem_fun(this, &Terminal::on_my_drag_drop));
+    signal_drag_leave().connect(sigc::mem_fun(this, &Terminal::on_my_drag_leave));
 }
 Terminal::~Terminal() {
     find_window->list_box.remove(*find_label.get_parent());
@@ -180,4 +188,94 @@ void Terminal::focus_vte() {
 bool Terminal::searchentry_lost_focus(GdkEventFocus *event) {
     if (!get_tab_frame(this)->get_focus_child())
         focus_vte();
+}
+bool Terminal::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
+    Box::on_draw(cr);
+
+    cr->set_source_rgb(1, 0, 0);
+    cr->rectangle(dock_hint.x, dock_hint.y, dock_hint.x+dock_hint.width, dock_hint.y+dock_hint.height);
+    cr->fill();
+}
+bool Terminal::on_my_drag_motion(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time) {
+    int width = get_width();
+    int height = get_height();
+    int from_center_x = x - width/2;
+    int from_center_y = y - height/2;
+
+    if (ABS(from_center_x) > ABS(from_center_y))
+        if (from_center_x > 0)
+            dock_pos = Gtk::POS_RIGHT;
+        else
+            dock_pos = Gtk::POS_LEFT;
+    else
+        if (from_center_y > 0)
+            dock_pos = Gtk::POS_BOTTOM;
+        else
+            dock_pos = Gtk::POS_TOP;
+
+    switch (dock_pos) {
+        case Gtk::POS_TOP:
+            dock_hint = GdkRectangle{0, 0, width, height/2};
+            break;
+        case Gtk::POS_LEFT:
+            dock_hint = GdkRectangle{0, 0, width/2, height};
+            break;
+        case Gtk::POS_RIGHT:
+            dock_hint = GdkRectangle{width/2, 0, width/2, height};
+            break;
+        case Gtk::POS_BOTTOM:
+            dock_hint = GdkRectangle{0, height/2, width, height/2};
+    }
+
+    queue_draw();
+}
+bool Terminal::on_my_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time) {
+    dock_hint = GdkRectangle{0, 0, 0, 0};
+    queue_draw();
+
+    if (dock_from == this) {
+        return FALSE;
+    }
+    Frame *old_frame = static_cast<Frame *>(dock_from->get_parent());
+
+    switch (dock_pos) {
+        case GTK_POS_TOP:
+            manage(new Splitter(get_parent(), dock_from, this, Gtk::ORIENTATION_VERTICAL));
+            break;
+        case GTK_POS_BOTTOM:
+            manage(new Splitter(get_parent(), this, dock_from, Gtk::ORIENTATION_VERTICAL));
+            break;
+        case GTK_POS_LEFT:
+            manage(new Splitter(get_parent(), dock_from, this, Gtk::ORIENTATION_HORIZONTAL));
+            break;
+        case GTK_POS_RIGHT:
+            manage(new Splitter(get_parent(), this, dock_from, Gtk::ORIENTATION_HORIZONTAL));
+    }
+
+
+    old_frame->destroy();
+    static_cast<TerminalWindow *>(this->get_toplevel())->present();
+    dock_from->focus_vte();
+}
+void Terminal::on_my_drag_begin(const Glib::RefPtr<Gdk::DragContext>& context) {
+    dock_from = this;
+}
+void Terminal::on_my_drag_leave(const Glib::RefPtr<Gdk::DragContext>& context, guint time) {
+    dock_hint = GdkRectangle{0, 0, 0, 0};
+    queue_draw();
+}
+bool Terminal::on_my_drag_failed(const Glib::RefPtr<Gdk::DragContext>& context, Gtk::DragResult result) {
+    Frame *old_frame = static_cast<Frame *>(dock_from->get_parent());
+
+    if (result == Gtk::DRAG_RESULT_NO_TARGET) {
+        TerminalWindow *window = new TerminalWindow;
+        window->show();
+        window->tabcontrol.add_tab(manage(new TabFrame(dock_from)));
+        window->show_all();
+
+        old_frame->destroy();
+    }
+}
+void Terminal::on_my_drag_end(const Glib::RefPtr<Gdk::DragContext>& context) {
+    dock_from = NULL;
 }

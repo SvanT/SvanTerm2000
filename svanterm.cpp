@@ -16,16 +16,17 @@
         - sudo ln -s /usr/local/lib/libvte-2.91.so.0 /usr/lib/
 
     TODOS:
-    - When dragging terminal to the tabcontrol from above, it doesn't dock until coming to the bottom.
-    - The active terminal cursor is visible while another program has the focus
-    - Flickering on changing tab (might try black background or some buffering)
+    - Position the window when dragging outside terminal to new window
+    - Don't close the program when dragging the last tab to itself
+    - Style the dock hint a bit
+    - Possibly replace dock_from with dnd data send
     - Move all style to CSS
 */
 
 bool broadcast_active = false;
 FindWindow *find_window = NULL;
 Tabcontrol *current_dragged_tab = NULL;
-TerminalDocker *docker = NULL;
+Terminal *dock_from = NULL;
 
 Splitter::Splitter(Gtk::Container *parent, Gtk::Widget *pane1, Gtk::Widget *pane2, Gtk::Orientation orientation) {
     #if GTK_MAJOR_VERSION > 3 || GTK_MINOR_VERSION > 15
@@ -71,9 +72,6 @@ bool TabFrame::labelentry_keypress(GdkEventKey* event) {
     return false;
 }
 TabFrame::TabFrame(Terminal *terminal) {
-    g_signal_connect(label_eventbox.gobj(), "realize", G_CALLBACK(add_to_docker_gdkwindow_map), this);
-    g_signal_connect(label_eventbox.gobj(), "unrealize", G_CALLBACK(remove_from_docker_gdkwindow_map), NULL);
-
     label_entry.signal_focus_out_event().connect(mem_fun(this, &TabFrame::labelentry_lost_focus));
     label_entry.signal_key_press_event().connect(mem_fun(this, &TabFrame::labelentry_keypress), false);
     label_eventbox.signal_button_press_event().connect(mem_fun(this, &TabFrame::label_button_press));
@@ -124,16 +122,6 @@ bool TabFrame::label_button_press(GdkEventButton* event) {
 void Tabcontrol::tab_drag_begin(const Glib::RefPtr<Gdk::DragContext>& context) {
     current_dragged_tab = this;
 }
-gboolean Tabcontrol::tab_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context,
-                                   int x, int y, guint time) {
-    if (current_dragged_tab == this) {
-        /* Dragging a tab to itself causes the window to close itself because of tab count 0,
-           cancel the action */
-        gtk_drag_finish(context->gobj(), FALSE, FALSE, GDK_CURRENT_TIME);
-        return TRUE;
-    } else
-        return FALSE;
-}
 GtkNotebook* Tabcontrol::detach_to_desktop(GtkNotebook *widget, GtkWidget *frame, gint x, gint y, gpointer user_data) {
     TerminalWindow *window = new TerminalWindow;
     window->move(x, y);
@@ -157,15 +145,22 @@ Tabcontrol::Tabcontrol() {
     set_group_name("svanterm");
     signal_page_removed().connect(mem_fun(this, &Tabcontrol::page_removed));
     signal_drag_begin().connect(mem_fun(this, &Tabcontrol::tab_drag_begin));
-    signal_drag_drop().connect(mem_fun(this, &Tabcontrol::tab_drag_drop), false);
     signal_page_added().connect(mem_fun(this, &Tabcontrol::page_added));
     signal_switch_page().connect(mem_fun(this, &Tabcontrol::switch_page));
+    signal_drag_drop().connect(mem_fun(this, &Tabcontrol::on_my_drag_drop), false);
     set_can_focus(false);
     set_scrollable(true);
 
     g_signal_connect(gobj(), "create-window", G_CALLBACK(Tabcontrol::detach_to_desktop), NULL);
-    g_signal_connect(gobj(), "realize", G_CALLBACK(add_to_docker_gdkwindow_map), this);
-    g_signal_connect(gobj(), "unrealize", G_CALLBACK(remove_from_docker_gdkwindow_map), NULL);
+
+    /* We need to be a drop target for terminals while still supporting the built in dragging of tabs
+       The following is trial and error created code to make that happen. */
+    std::vector<Gtk::TargetEntry> listTargets;
+    auto targets = drag_dest_get_target_list();
+    targets->add("SvanTerminal");
+
+    drag_dest_set(listTargets);
+    drag_dest_set_target_list(targets);
 }
 TabFrame *Tabcontrol::add_tab(TabFrame *tab) {
     append_page(*tab, tab->label_eventbox);
@@ -177,6 +172,21 @@ void Tabcontrol::page_added(Widget* page, guint page_num) {
     set_tab_reorderable(*tab, true);
     show_all_children();
     set_current_page(page_num);
+}
+bool Tabcontrol::on_my_drag_drop(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, guint time) {
+    if (dock_from != NULL) {
+        Frame *old_frame = static_cast<Frame *>(dock_from->get_parent());
+        add_tab(manage(new TabFrame(dock_from)));
+        old_frame->destroy();
+
+        static_cast<TerminalWindow *>(get_toplevel())->present();
+        dock_from->focus_vte();
+    } else if (current_dragged_tab == this) {
+        /* Dragging a tab to itself causes the window to close itself because of tab count 0,
+           cancel the action */
+        gtk_drag_finish(context->gobj(), FALSE, FALSE, GDK_CURRENT_TIME);
+        return TRUE;
+    }
 }
 
 Frame::Frame() {
@@ -266,7 +276,6 @@ void load_css() {
 int main(int argc, char *argv[]) {
     Gtk::Main app(argc, argv);
     notify_init("SvanTerm");
-    docker = new TerminalDocker;
     find_window = new FindWindow;
     load_css();
     TerminalWindow *window = new TerminalWindow;

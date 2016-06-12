@@ -28,6 +28,12 @@ void FindWindow::row_selected(Gtk::ListBoxRow* row) {
     terminal->focus_vte();
 
     static_cast<Gtk::Window *>(tabcontrol->get_parent())->present();
+
+    // Make sure we get the focus back from VTE
+    while(Gtk::Main::events_pending())
+        Gtk::Main::iteration();
+    present();
+    usleep(10000);
     present();
 }
 bool FindWindow::KeyPress(GdkEventKey* event) {
@@ -84,7 +90,9 @@ void FindWindow::show_find(Gtk::Window *calling_window) {
     move(x + width/2 - find_width/2, y + height/2 - find_height/2);
     list_box.unselect_row();
     show_all();
+    present();
     set_focus(search_box);
+    set_keep_above(true);
 }
 void FindWindow::row_activated(Gtk::ListBoxRow* row) {
     hide();
