@@ -90,6 +90,8 @@ void Terminal::vte_title_changed(VteTerminal *widget, gpointer user_data) {
 Terminal::Terminal() {
     dock_hint = GdkRectangle{0, 0, 0, 0};
     vte = vte_terminal_new();
+    putenv("BASHOPTS=checkwinsize");
+    putenv("HISTCONTROL=ignoreboth");
     char *argv[] = { vte_get_user_shell(), NULL };
     vte_terminal_spawn_sync(VTE_TERMINAL(vte), VTE_PTY_DEFAULT, NULL, argv, NULL,
                             (GSpawnFlags)0, NULL,
