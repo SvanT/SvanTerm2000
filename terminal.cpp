@@ -1,3 +1,6 @@
+#define PCRE2_CODE_UNIT_WIDTH 0
+
+#include <pcre2.h>
 #include "svanterm.h"
 
 long last_notification_timestamp;
@@ -98,8 +101,8 @@ Terminal::Terminal() {
     eventbox.add(label);
     eventbox.signal_button_press_event().connect(mem_fun(this, &Terminal::header_button_press));
 
-    GRegex *regex = g_regex_new("(https?://|www\\.)[^\\s]*", (GRegexCompileFlags)0, (GRegexMatchFlags)0, 0);
-    vte_terminal_match_add_gregex(VTE_TERMINAL(vte), regex, (GRegexMatchFlags)0);
+    VteRegex *regex = vte_regex_new_for_match("(https?://|www\\.)[^\\s]*", -1, PCRE2_MULTILINE, NULL);
+    vte_terminal_match_add_regex(VTE_TERMINAL(vte), regex, 0);
     vte_terminal_set_scrollback_lines(VTE_TERMINAL(vte), 10000);
     g_signal_connect(vte, "beep", G_CALLBACK(Terminal::vte_beep), this);
     g_signal_connect(vte, "child-exited", G_CALLBACK(Terminal::vte_child_exited), this);
