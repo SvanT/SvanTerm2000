@@ -283,6 +283,8 @@ void load_css() {
 }
 int main(int argc, char *argv[]) {
     Gtk::Main app(argc, argv);
+    putenv((char *)"BASHOPTS=checkwinsize");
+    putenv((char *)"HISTCONTROL=ignoreboth:erasedups");
     notify_init("SvanTerm");
     find_window = new FindWindow;
     load_css();
