@@ -167,9 +167,9 @@ bool Terminal::searchentry_keypress(GdkEventKey* event) {
         return false;
     }
 
-    GRegex *regex = g_regex_new(searchentry.get_text().c_str(), G_REGEX_CASELESS, (GRegexMatchFlags)0, 0);
+    VteRegex *regex = vte_regex_new_for_search(searchentry.get_text().c_str(), -1, PCRE2_CASELESS, NULL);
     vte_terminal_unselect_all((VteTerminal *)vte);
-    vte_terminal_search_set_gregex((VteTerminal *)vte, regex, (GRegexMatchFlags)0);
+    vte_terminal_search_set_regex((VteTerminal *)vte, regex, 0);
     vte_terminal_search_find_previous((VteTerminal *)vte);
     return false;
 }
