@@ -106,7 +106,7 @@ Terminal::Terminal() {
     VteRegex *regex = vte_regex_new_for_match("(https?://|www\\.)[^\\s]*", -1, PCRE2_MULTILINE, NULL);
     vte_terminal_match_add_regex(VTE_TERMINAL(vte), regex, 0);
     vte_terminal_set_scrollback_lines(VTE_TERMINAL(vte), 10000);
-    g_signal_connect(vte, "beep", G_CALLBACK(Terminal::vte_beep), this);
+    g_signal_connect(vte, "bell", G_CALLBACK(Terminal::vte_beep), this);
     g_signal_connect(vte, "child-exited", G_CALLBACK(Terminal::vte_child_exited), this);
     g_signal_connect(vte, "button-press-event", G_CALLBACK(Terminal::vte_click), this);
     g_signal_connect(vte, "focus-in-event", G_CALLBACK(Terminal::vte_got_focus), this);
