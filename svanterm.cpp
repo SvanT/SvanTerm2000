@@ -49,9 +49,10 @@ Splitter::Splitter(Gtk::Container *parent, Gtk::Widget *pane1, Gtk::Widget *pane
     }
     if (pane2->get_parent()) {
         pane2->reparent(*frame2);
+    } else {
+        frame2->add(*pane2);
     }
     parent->add(*this);
-    frame2->add(*pane2);
     pack1(*frame1, TRUE, FALSE);
     pack2(*frame2, TRUE, FALSE);
     show_all();
@@ -84,8 +85,9 @@ TabFrame::TabFrame(Terminal *terminal) {
     label_eventbox.show_all();
     if (terminal->get_parent()) {
         terminal->reparent(*this);
+    } else {
+        add(*terminal);
     }
-    add(*terminal);
     label_entry.show();
 }
 void TabFrame::update_title() {
